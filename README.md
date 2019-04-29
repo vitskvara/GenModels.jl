@@ -1,5 +1,5 @@
 # GenerativeModels.jl
-A collection of deep neural generative models based on the Flux library.
+A collection of deep neural generative models based on the Flux library. Most models have a simple constructor for convolutional versions. For details on how to use this package, see the tests.
 
 ## Models implemented:
 

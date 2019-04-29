@@ -108,4 +108,32 @@ N = 10
 	is, ls = get(hist, :aeloss)
 	@test ls[1] > ls[end] 
 
+	# convolutional AAE
+	data = randn(Float32,32,16,1,8);
+	m,n,c,k = size(data)
+	# now setup the convolutional net
+	insize = (m,n,c)
+	latentdim = 2
+	disc_nlayers = 4 # number of discriminator layers
+	nconv = 3
+	kernelsize = 3
+	channels = (2,4,6)
+	scaling = [(2,2),(2,2),(1,1)]
+	batchnorm = true
+	hdim = 10 # width of the discriminator
+	model = GenerativeModels.ConvAAE(insize, latentdim, disc_nlayers, nconv, kernelsize, 
+		channels, scaling;
+		hdim = hdim, batchnorm = batchnorm)
+	# test correct construction
+	@test length(model.discriminator.layers) == disc_nlayers
+	@test size(model.discriminator.layers[2].W, 1) == hdim
+	# test training
+	hist = MVHistory()
+	frozen_params = getparams(model)
+	@test size(model(data)) == size(data)
+	@test size(model.encoder(data)) == (latentdim,k)
+	GenerativeModels.fit!(model, data, 4, 10, cbit=1, history=hist, verb=false)
+	@test all(paramchange(frozen_params, model))	
+	(i,ls) = get(hist,:aeloss)
+	@test ls[end] < ls[1]
 end

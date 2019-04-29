@@ -1,6 +1,6 @@
 using Flux
 using PyPlot
-using AlfvenDetectors
+using GenerativeModels
 using StatsBase
 using Random
 using ValueHistories
@@ -29,9 +29,9 @@ binormal(m::Int,n::Int) = binormal(Float32,m,n)
 ldim = 1
 hdim = 50
 nonlinearity = Flux.relu
-model = AlfvenDetectors.AAE(M, ldim, 3, 3, binormal, hdim = hdim, activation=nonlinearity)
+model = AAE(M, ldim, 3, 3, binormal, hdim = hdim, activation=nonlinearity)
 hist = MVHistory()
-AlfvenDetectors.fit!(model, X, 50, 2000, history=hist,verb=true)
+GenerativeModels.fit!(model, X, 50, 2000, history=hist,verb=true)
 
 rX = model(X).data
 figure(figsize=(10,5))
@@ -57,17 +57,14 @@ M = 2
 N = 200
 s = Float32.([30 10; 10 1])
 X = s*randn(Float32,M,N)
-figure()
-scatter(X[1,:],X[2,:])
-show()
 
 # construct and train the model
 ldim = 1
 hdim = 50
 nonlinearity = Flux.relu
-model = AlfvenDetectors.AAE(M, ldim, 3, 3, randn, hdim = hdim, activation=nonlinearity)
+model = AAE(M, ldim, 3, 3, randn, hdim = hdim, activation=nonlinearity)
 hist = MVHistory()
-AlfvenDetectors.fit!(model, X, 50, 2000, history=hist,verb=true);
+GenerativeModels.fit!(model, X, 50, 2000, history=hist,verb=true);
 
 rX = model(X).data
 figure(figsize=(10,5))

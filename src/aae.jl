@@ -11,6 +11,12 @@ struct AAE{E, FE, DE, DS, FDS, PZ} <: GenerativeModel
 	f_discriminator::FDS # frozen discriminator copy
 	pz::PZ
 end
+"""
+	AAE(e, de, ds, pz)
+
+Construct AAE given encoder, decoder, discriminator and pz(n), where n is number of samples and
+is compatible with the dimension of encoder output.
+"""
 AAE(e, de, ds, pz) = AAE(e, freeze(e), de, ds, freeze(ds), pz) # default constructor 
 
 # make the struct callable
@@ -20,13 +26,14 @@ AAE(e, de, ds, pz) = AAE(e, freeze(e), de, ds, freeze(ds), pz) # default constru
 Flux.@treelike AAE
 
 """
-	AAE(esize, decsize, dissize; [activation, layer])
+	AAE(esize, decsize, dissize[, pz]; [activation, layer])
 
 Initialize an adversarial autoencoder.
 
 	esize = vector of ints specifying the width anf number of layers of the encoder
 	decsize = size of decoder
 	dissize = size of discriminator
+	pz = sampling distribution that can be called as pz(dim,nsamples)
 	activation [Flux.relu] = arbitrary activation function
 	layer [Flux.Dense] = layer type
 """
@@ -56,7 +63,7 @@ function AAE(esize::Array{Int64,1}, decsize::Array{Int64,1}, dissize::Array{Int6
 end
 
 """
-	AAE(xdim, zdim, ae_nlayers, disc_nlayers; [hdim, activation, layer])
+	AAE(xdim, zdim, ae_nlayers, disc_nlayers[, pz]; [hdim, activation, layer])
 
 Initialize an adversarial autoencoder given input and latent dimension 
 and number of layers.
@@ -65,6 +72,7 @@ and number of layers.
 	zdim = code size
 	ae_nlayers = number of layers of the autoencoder
 	disc_nlayers = number of layers of the discriminator
+	pz = sampling distribution that can be called as pz(dim,nsamples)
 	hdim = width of layers, if not specified, it is linearly interpolated
 	activation [Flux.relu] = arbitrary activation function
 	layer [Flux.Dense] = layer type
@@ -86,6 +94,33 @@ function AAE(xdim::Int, zdim::Int, ae_nlayers::Int, disc_nlayers::Int,
 	
 	# finally return the structure
 	AAE(esize,decsize, dissize, pz; activation=activation, layer=layer)
+end
+
+"""
+	ConvAAE(insize, zdim, disc_nlayers, nconv, kernelsize, channels, scaling[, pz]; 
+		[hdim, ndense, dsizes, activation, stride, batchnorm, outbatchnorm])
+
+Initialize a convolutional adversarial autoencoder. 
+	
+	insize = tuple of (height, width, channels)
+	pz = sampling distribution that can be called as pz(dim,nsamples)
+"""
+function ConvAAE(insize, zdim, disc_nlayers, nconv, kernelsize, channels, scaling, pz=randn; 
+	outbatchnorm=false, hdim=nothing, activation=Flux.relu, layer=Flux.Dense,
+	kwargs...)
+	# first build the convolutional encoder and decoder
+	encoder = convencoder(insize, zdim, nconv, kernelsize, 
+		channels, scaling; outbatchnorm=outbatchnorm, kwargs...)
+	decoder = convdecoder(insize, zdim, nconv, kernelsize, 
+		reverse(channels), scaling; kwargs...)
+	# then a classical discriminator
+	if hdim == nothing
+		dissize = ceil.(Int, range(zdim, 1, length=disc_nlayers+1))
+	else
+		dissize = vcat([zdim], fill(hdim, disc_nlayers-1), [1])
+	end
+	discriminator = discriminatorbuilder(dissize, activation, layer)
+	return AAE(encoder, decoder, discriminator, n->pz(Float,zdim,n))
 end
 
 ################
