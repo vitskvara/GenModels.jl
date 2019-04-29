@@ -83,9 +83,9 @@ Initializes a convolutional autoencoder.
 """
 function ConvAE(insize, latentdim, nconv, kernelsize, channels, scaling; 
 	outbatchnorm=false, kwargs...)
-	encoder = AlfvenDetectors.convencoder(insize, latentdim, nconv, kernelsize, 
+	encoder = convencoder(insize, latentdim, nconv, kernelsize, 
 		channels, scaling; outbatchnorm=outbatchnorm, kwargs...)
-	decoder = AlfvenDetectors.convdecoder(insize, latentdim, nconv, kernelsize, 
+	decoder = convdecoder(insize, latentdim, nconv, kernelsize, 
 		reverse(channels), scaling; kwargs...)
 	return AE(encoder, decoder)
 end
