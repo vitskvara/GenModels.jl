@@ -72,8 +72,8 @@ between xdim and zdim.
 		:scalar - a scalar variance of the output is estimated
 		:diag - the diagonal of covariance of the output is estimated
 """
-function VAE(xdim::Int, zdim::Int, nlayers::Int; activation = Flux.relu,
-		hdim = nothing, layer = Flux.Dense, variant = :unit)
+function VAE(xdim::Int, zdim::Int, nlayers::Int; 
+	activation = Flux.relu, hdim = nothing, layer = Flux.Dense, variant = :unit)
 	@assert nlayers >= 2
 
 	if hdim == nothing

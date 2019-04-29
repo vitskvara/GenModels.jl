@@ -33,7 +33,7 @@ Initialize an adversarial autoencoder.
 	esize = vector of ints specifying the width anf number of layers of the encoder
 	decsize = size of decoder
 	dissize = size of discriminator
-	pz = sampling distribution that can be called as pz(dim,nsamples)
+	pz = sampling distribution that can be called as pz(T,dim,nsamples)
 	activation [Flux.relu] = arbitrary activation function
 	layer [Flux.Dense] = layer type
 """
@@ -72,7 +72,7 @@ and number of layers.
 	zdim = code size
 	ae_nlayers = number of layers of the autoencoder
 	disc_nlayers = number of layers of the discriminator
-	pz = sampling distribution that can be called as pz(dim,nsamples)
+	pz = sampling distribution that can be called as pz(T,dim,nsamples)
 	hdim = width of layers, if not specified, it is linearly interpolated
 	activation [Flux.relu] = arbitrary activation function
 	layer [Flux.Dense] = layer type
@@ -109,7 +109,7 @@ Initialize a convolutional adversarial autoencoder.
 	kernelsize = Int or a tuple/vector of ints
 	channels = a tuple/vector of number of channels
 	scaling = Int or a tuple/vector of ints
-	pz = sampling distribution that can be called as pz(dim,nsamples)
+	pz = sampling distribution that can be called as pz(T,dim,nsamples)
 	hdim = widht of layers in the discriminator
 	ndense = number of dense layers
 	dsizes = vector of dense layer widths
@@ -153,20 +153,16 @@ aeloss(aae::AAE,X) = Flux.mse(X,aae(X))
 Discriminator loss given code Z and original sample X. If Z not given, 
 it is autoamtically generated using the prescribed pz.
 """
-function dloss(aae::AAE,X,Z=nothing) 
-	if Z == nothing
-		Z = aae.pz(size(X,2))
-	end
-	return - half*(mean(log.(aae.discriminator(Z) .+ eps(Float))) + 
-		mean(log.(1 .- aae.discriminator(aae.f_encoder(X)) .+ eps(Float))))
-end
+dloss(aae::AAE,X,Z) = dloss(aae.discriminator, aae.f_encoder, Z, X)
+dloss(aae::AAE,X) = dloss(aae, X, aae.pz(size(X,2)))  
+# note that X and Z is swapped here from the normal notation
 
 """
 	gloss(AAE,X)
 
 Encoder/generator loss.
 """
-gloss(aae::AAE,X) = - mean(log.(aae.f_discriminator(aae.encoder(X)) .+ eps(Float)))
+gloss(aae::AAE,X) = gloss(aae.f_discriminator, aae.encoder,X)
 
 """
 	loss(AAE,X)
@@ -176,7 +172,7 @@ Adversarial autoencoder loss (MSE).
 loss(aae::AAE,X) = aeloss(aae,X)
 
 """
-	getlosses(AAE, X, Z)
+	getlosses(AAE, X[, Z])
 
 Return the numeric values of current losses.
 """
@@ -185,12 +181,6 @@ getlosses(aae::AAE, X, Z) =  (
 		Flux.Tracker.data(dloss(aae,X,Z)),
 		Flux.Tracker.data(gloss(aae,X))
 		)
-
-"""
-	getlosses(AAE, X)
-
-Return the numeric values of current losses.
-"""
 getlosses(aae::AAE, X) = getlosses(aae::AAE, X, aae.pz(size(X,2)))
 
 """

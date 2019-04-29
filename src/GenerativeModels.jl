@@ -18,8 +18,10 @@ include("ae.jl")
 include("vae.jl")
 include("tsvae.jl")
 include("aae.jl")
+include("wae.jl")
 
 export AE, AAE, VAE, TSVAE
 export ConvAE, ConvAAE, ConvVAE, ConvTSVAE
+export fit!
 
 end # module

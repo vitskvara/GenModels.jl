@@ -141,6 +141,51 @@ end
 
 length(x::MVHistory) = 1
 
+# GAN losses
+"""
+    dloss(d,g,X,Z)
+
+Discriminator loss.
+"""
+dloss(d,g,X,Z) = - half*(mean(log.(d(X) .+ eps(Float))) + mean(log.(1 .- d(g(Z)) .+ eps(Float))))
+
+"""
+    gloss(d,g,X)
+
+Generator loss.
+"""
+gloss(d,g,X) = - mean(log.(d(g(X)) .+ eps(Float)))
+
+# Stuff for WAE and MMD computation
+"""
+    rbf(x,y,σ)
+
+Gaussian kernel of x and y.
+"""
+rbf(x,y,σ) = exp.(-(sum((x-y).^2,dims=1)/(2*σ)))
+
+"""
+    imq(x,y,c)
+
+Inverse multiquadratics kernel of x and y.    
+"""
+imq(x,y,c) = c./(c.+sum(((x-y).^2),dims=1))
+
+"""
+    ekxy(k,X,Y,c)
+
+E_{x in X,y in Y}[k(x,y,c)] - mean value of kernel k.
+"""
+ekxy(k,X,Y,c) = mean(k(X,Y,c))
+
+"""
+    MMD(k,X,Y,c)
+
+Maximum mean discrepancy for samples X and Y given kernel k and parameter c.    
+"""
+MMD(k,X,Y,c) = ekxy(k,X,X,c) - 2*ekxy(k,X,Y,c) + ekxy(k,Y,Y,c)
+
+# other auxiliary functions
 """
    scalar2tuple(x)
 
