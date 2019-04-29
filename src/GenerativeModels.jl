@@ -19,4 +19,7 @@ include("vae.jl")
 include("tsvae.jl")
 include("aae.jl")
 
+export AE, AAE, VAE, TSVAE
+export ConvAE, ConvVAE, ConvTSVAE
+
 end # module

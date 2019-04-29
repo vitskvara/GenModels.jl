@@ -1,2 +1,2 @@
 # GenerativeModels.jl
-Deep neural generative models based on Flux library.
+Deep neural generative models based on the Flux library.
