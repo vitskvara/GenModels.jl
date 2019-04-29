@@ -353,10 +353,10 @@ function convmaxpool(ks::Int, channels::Pair, scales::Union{Tuple,Int};
     layer = (resblock) ? ResBlock : SameConv
     return batchnorm ? 
         Flux.Chain(layer((ks,ks), channels, activation, stride = (stride,stride)),
-                    x->maxpool(x,scales),
+                    Flux.MaxPool(scales),
                     BatchNorm(channels[2])) : 
         Flux.Chain(layer((ks,ks), channels, activation, stride = (stride,stride)),
-                    x->maxpool(x,scales))
+                    Flux.MaxPool(scales))
 end
 
 """

@@ -185,7 +185,7 @@ model = Flux.Chain(Flux.Dense(xdim, ldim), Flux.Dense(ldim, xdim))
 	    # 24x24x2x1
 	    Flux.Conv((3,3), 1=>4, pad=(1,1)),
 	    # 24x24x4x1
-	    x->Flux.maxpool(x,(8,6)),
+	    Flux.MaxPool((8,6)),
 	    # 3x4x4x1
 	    x->GenerativeModels.upscale(x,(8,6)),
 	    # 24x24x4x1
@@ -222,7 +222,7 @@ model = Flux.Chain(Flux.Dense(xdim, ldim), Flux.Dense(ldim, xdim))
 	    # 4x4x1x1
 	    Flux.Conv((3,3), 1=>4, pad=(1,1)),
 	    # 4x4x4x1
-	    x->Flux.maxpool(x,(2,2)),
+	    Flux.MaxPool((2,2)),
 	    # 2x2x4x1
 	    x->GenerativeModels.zeropad(x,(1,1,1,1)),
 	    # 4x4x4x1
