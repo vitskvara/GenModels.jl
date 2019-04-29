@@ -93,19 +93,35 @@ function VAE(xdim::Int, zdim::Int, nlayers::Int; activation = Flux.relu,
 end
 
 """
-	ConvVAE(insize, latentdim, nconv, kernelsize, channels, scaling; 
+	ConvVAE(insize, zdim, nconv, kernelsize, channels, scaling; 
 		[hdim, variant, ndense, dsizes, activation, stride, batchnorm])
 
 Initializes a convolutional autoencoder.
+
+
+	insize = tuple of (height, width, channels)
+	zdim = size of latent space
+	nconv = number of convolutional layers
+	kernelsize = Int or a tuple/vector of ints
+	channels = a tuple/vector of number of channels
+	scaling = Int or a tuple/vector of ints
+	pz = sampling distribution that can be called as pz(dim,nsamples)
+	hdim = widht of layers in the discriminator
+	variant = one of [:unit, :scalar, :diag]
+	ndense = number of dense layers
+	dsizes = vector of dense layer widths
+	activation = type of nonlinearity
+	stride = Int or vecotr/tuple of ints
+	batchnorm = use batchnorm in convolutional layers
 """
-function ConvVAE(insize, latentdim, nconv, kernelsize, channels, scaling; variant=:unit, kwargs...)
-	encoder = convencoder(insize, latentdim*2, nconv, kernelsize, 
+function ConvVAE(insize, zdim, nconv, kernelsize, channels, scaling; variant=:unit, kwargs...)
+	encoder = convencoder(insize, zdim*2, nconv, kernelsize, 
 		channels, scaling; kwargs...)
 	if variant in [:diag, :scalar]
 		insize = [x for x in insize]
 		insize[end] = 2*insize[end]
 	end
-	decoder = convdecoder(insize, latentdim, nconv, kernelsize, 
+	decoder = convdecoder(insize, zdim, nconv, kernelsize, 
 		reverse(channels), scaling; kwargs...)
 	return VAE(encoder, samplenormal, decoder, variant)
 end

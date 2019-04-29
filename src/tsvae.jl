@@ -38,7 +38,7 @@ function TSVAE(m1size::AbstractVector, m2size::AbstractVector;
 end
 
 """
-	TSVAE(xdim, latentdim, nlayers; [activation, layer])
+	TSVAE(xdim, zdim, nlayers; [activation, layer])
 
 A lightweight constructor for TSVAE.
 """
@@ -57,19 +57,33 @@ function TSVAE(xdim::Int, zdim::Int, nlayers::Union{Int, Tuple};
 end
 
 """
-	ConvTSVAE(insize, latentdim, nconv, kernelsize, channels, scaling; 
-		[variant, ndense, dsizes, activation, stride, batchnorm])
+	ConvTSVAE(insize, zdim, nconv, kernelsize, channels, scaling; 
+		[variant, hdim, ndense, dsizes, activation, stride, batchnorm])
 
 Initializes a two stage variational autoencoder with convolutional first stage.
+
+	insize = tuple of (height, width, channels)
+	zdim = size of latent space
+	nconv = number of convolutional layers
+	kernelsize = Int or a tuple/vector of ints
+	channels = a tuple/vector of number of channels
+	scaling = Int or a tuple/vector of ints
+	variant = one of [:unit, :scalar, :diag] - :scalar is recommended for TSVAE
+	hdim = widht of layers in the discriminator
+	ndense = number of dense layers
+	dsizes = vector of dense layer widths
+	activation = type of nonlinearity
+	stride = Int or vecotr/tuple of ints
+	batchnorm = use batchnorm in convolutional layers
 """
-function ConvTSVAE(insize, latentdim, nlayers::Union{Int, Tuple}, kernelsize, channels, scaling; 
+function ConvTSVAE(insize, zdim, nlayers::Union{Int, Tuple}, kernelsize, channels, scaling; 
 	variant = :scalar, batchnorm = false, kwargs...)
 	nlayers = scalar2vec(nlayers)
 	variant = scalar2vec(variant)
 
-	m1 = ConvVAE(insize, latentdim, nlayers[1], kernelsize, channels, scaling; variant = variant[1],
+	m1 = ConvVAE(insize, zdim, nlayers[1], kernelsize, channels, scaling; variant = variant[1],
 		batchnorm = batchnorm, kwargs...)
-	m2 = VAE(latentdim, latentdim, nlayers[2]; variant = variant[2], kwargs...)
+	m2 = VAE(zdim, zdim, nlayers[2]; variant = variant[2], kwargs...)
 	return TSVAE(m1,m2)
 end
 

@@ -76,16 +76,30 @@ function AE(xdim::Int, zdim::Int, nlayers::Int; hdim=nothing, activation = Flux.
 end
 
 """
-	ConvAE(insize, latentdim, nconv, kernelsize, channels, scaling; 
+	ConvAE(insize, zdim, nconv, kernelsize, channels, scaling; 
 		[hdim, ndense, dsizes, activation, stride, batchnorm, outbatchnorm])
 
 Initializes a convolutional autoencoder.
+
+	insize = tuple of (height, width, channels)
+	zdim = size of latent space
+	nconv = number of convolutional layers
+	kernelsize = Int or a tuple/vector of ints
+	channels = a tuple/vector of number of channels
+	scaling = Int or a tuple/vector of ints
+	hdim = widht of layers in the discriminator
+	ndense = number of dense layers
+	dsizes = vector of dense layer widths
+	activation = type of nonlinearity
+	stride = Int or vecotr/tuple of ints
+	batchnorm = use batchnorm in convolutional layers
+	outbatchnorm = use batchnorm on the outpu of encoder
 """
-function ConvAE(insize, latentdim, nconv, kernelsize, channels, scaling; 
+function ConvAE(insize, zdim, nconv, kernelsize, channels, scaling; 
 	outbatchnorm=false, kwargs...)
-	encoder = convencoder(insize, latentdim, nconv, kernelsize, 
+	encoder = convencoder(insize, zdim, nconv, kernelsize, 
 		channels, scaling; outbatchnorm=outbatchnorm, kwargs...)
-	decoder = convdecoder(insize, latentdim, nconv, kernelsize, 
+	decoder = convdecoder(insize, zdim, nconv, kernelsize, 
 		reverse(channels), scaling; kwargs...)
 	return AE(encoder, decoder)
 end

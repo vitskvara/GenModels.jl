@@ -103,16 +103,29 @@ end
 Initialize a convolutional adversarial autoencoder. 
 	
 	insize = tuple of (height, width, channels)
+	zdim = size of latent space
+	disc_nlayers = number of layers od the discriminator
+	nconv = number of convolutional layers
+	kernelsize = Int or a tuple/vector of ints
+	channels = a tuple/vector of number of channels
+	scaling = Int or a tuple/vector of ints
 	pz = sampling distribution that can be called as pz(dim,nsamples)
+	hdim = widht of layers in the discriminator
+	ndense = number of dense layers
+	dsizes = vector of dense layer widths
+	activation = type of nonlinearity
+	stride = Int or vecotr/tuple of ints
+	batchnorm = use batchnorm in convolutional layers
+	outbatchnorm = use batchnorm on the outpu of encoder
 """
 function ConvAAE(insize, zdim, disc_nlayers, nconv, kernelsize, channels, scaling, pz=randn; 
 	outbatchnorm=false, hdim=nothing, activation=Flux.relu, layer=Flux.Dense,
 	kwargs...)
 	# first build the convolutional encoder and decoder
 	encoder = convencoder(insize, zdim, nconv, kernelsize, 
-		channels, scaling; outbatchnorm=outbatchnorm, kwargs...)
+		channels, scaling; outbatchnorm=outbatchnorm, activation = activation, kwargs...)
 	decoder = convdecoder(insize, zdim, nconv, kernelsize, 
-		reverse(channels), scaling; kwargs...)
+		reverse(channels), scaling; activation = activation, kwargs...)
 	# then a classical discriminator
 	if hdim == nothing
 		dissize = ceil.(Int, range(zdim, 1, length=disc_nlayers+1))
