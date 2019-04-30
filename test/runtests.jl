@@ -18,6 +18,7 @@ end
 	include("vae.jl")
 	include("tsvae.jl")
 	include("aae.jl")
+	include("wae.jl")
 end
 
 if "CuArrays" in keys(Pkg.installed())

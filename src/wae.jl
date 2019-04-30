@@ -121,46 +121,46 @@ Autoencoder reconstruction loss.
 aeloss(wae::WAE, X) = Flux.mse(wae(X), X)
 
 """
-	MMD(WAE, X[, Z], c)
+	MMD(WAE, X[, Z], σ)
 
-MMD for a given sample X, scaling constant c. If Z is not given, it is automatically generated 
+MMD for a given sample X, scaling constant σ. If Z is not given, it is automatically generated 
 from the model's pz.
 """
-MMD(wae::WAE, X::AbstractArray, Z::AbstractArray, c) = MMD(wae.kernel, wae.encoder(X), Z, Float(c))
-MMD(wae::WAE, X::AbstractArray, c) = MMD(wae.kernel, wae.encoder(X), wae.pz(size(X,2)), Float(c))
+MMD(wae::WAE, X::AbstractArray, Z::AbstractArray, σ) = MMD(wae.kernel, wae.encoder(X), Z, Float(σ))
+MMD(wae::WAE, X::AbstractArray, σ) = MMD(wae.kernel, wae.encoder(X), wae.pz(size(X,ndims(X))), Float(σ))
 
 """
-	loss(WAE, X[, Z], c, λ)
+	loss(WAE, X[, Z], σ, λ)
 
 Total loss of the WAE. λ is the scaling parameter of the MMD in the total loss.
 """
-loss(wae::WAE, X::AbstractArray, Z::AbstractArray, c, λ::Real) = aeloss(wae, X) + Float(λ)*MMD(wae, X, Z, c)
-loss(wae::WAE, X::AbstractArray, c, λ::Real) = aeloss(wae, X) + Float(λ)*MMD(wae, X, c)
+loss(wae::WAE, X::AbstractArray, Z::AbstractArray, σ, λ::Real) = aeloss(wae, X) + Float(λ)*MMD(wae, X, Z, σ)
+loss(wae::WAE, X::AbstractArray, σ, λ::Real) = aeloss(wae, X) + Float(λ)*MMD(wae, X, σ)
 
 """
-	getlosses(WAE, X[, Z], c, λ)
+	getlosses(WAE, X[, Z], σ, λ)
 
 Obtain the nuemrical values of the WAE losses.
 """
-getlosses(wae::WAE, X::AbstractArray, Z::AbstractArray, c, λ::Real) =  (
-		Flux.Tracker.data(loss(wae,X,Z,c,λ)),
+getlosses(wae::WAE, X::AbstractArray, Z::AbstractArray, σ, λ::Real) =  (
+		Flux.Tracker.data(loss(wae,X,Z,σ,λ)),
 		Flux.Tracker.data(aeloss(wae,X)),
-		Flux.Tracker.data(MMD(wae,X,Z,c))
+		Flux.Tracker.data(MMD(wae,X,Z,σ))
 		)
-getlosses(wae::WAE, X::AbstractArray, c, λ::Real) = getlosses(wae::WAE, X, wae.pz(size(X,2)), c, λ)
+getlosses(wae::WAE, X::AbstractArray, σ, λ::Real) = getlosses(wae::WAE, X, wae.pz(size(X,ndims(X))), σ, λ)
 
 """
-	evalloss(WAE, X[, Z], c, λ)
+	evalloss(WAE, X[, Z], σ, λ)
 
 Print WAE losses.
 """
-function evalloss(wae::WAE, X::AbstractArray, Z::AbstractArray, c, λ::Real) 
-	l, ael, mmd = getlosses(wae, X, Z, c, λ)
+function evalloss(wae::WAE, X::AbstractArray, Z::AbstractArray, σ, λ::Real) 
+	l, ael, mmd = getlosses(wae, X, Z, σ, λ)
 	print("total loss: ", l,
 	"\nautoencoder loss: ", ael,
 	"\nMMD loss: ", mmd, "\n\n")
 end
-evalloss(wae::WAE, X::AbstractArray, c, λ::Real) = evalloss(wae::WAE, X, wae.pz(size(X,2)), c, λ)
+evalloss(wae::WAE, X::AbstractArray, σ, λ::Real) = evalloss(wae::WAE, X, wae.pz(size(X,2)), σ, λ)
 
 """
 	getlsize(WAE)
@@ -170,36 +170,36 @@ Return size of the latent code.
 getlsize(wae::WAE) = size(wae.encoder.layers[end].W,1)
 
 """
-	track!(WAE, history, X, c)
+	track!(WAE, history, X, σ, λ)
 
 Save current progress.
 """
-function track!(wae::WAE, history::MVHistory, X::AbstractArray, c, λ::Real)
-	l, ael, mmd = getlosses(wae, X, c, λ)
+function track!(wae::WAE, history::MVHistory, X::AbstractArray, σ, λ::Real)
+	l, ael, mmd = getlosses(wae, X, σ, λ)
 	push!(history, :loss, l)
 	push!(history, :aeloss, ael)
 	push!(history, :mmd, mmd)
 end
 
 """
-	(cb::basic_callback)(WAE, d, l, opt, c, λ)
+	(cb::basic_callback)(WAE, d, l, opt, σ, λ)
 
 Callback for the train! function.
 TODO: stopping condition, change learning rate.
 """
-function (cb::basic_callback)(m::WAE, d, l, opt, c, λ::Real)
+function (cb::basic_callback)(m::WAE, d, l, opt, σ, λ::Real)
 	# update iteration count
 	cb.iter_counter += 1
 	# save training progress to a MVHistory
 	if cb.history != nothing
-		track!(m, cb.history, d, c, λ)
+		track!(m, cb.history, d, σ, λ)
 	end
 	# verbal output
 	if cb.verb 
 		# if first iteration or a progress print iteration
 		# recalculate the shown values
 		if (cb.iter_counter%cb.show_it == 0 || cb.iter_counter == 1)
-			ls = getlosses(m, d, c, λ)
+			ls = getlosses(m, d, σ, λ)
 			cb.progress_vals = Array{Any,1}()
 			push!(cb.progress_vals, ceil(Int, cb.iter_counter/cb.epoch_size))
 			push!(cb.progress_vals, cb.iter_counter)
@@ -220,7 +220,7 @@ end
 
 """
 	fit!(WAE, X, batchsize, nepochs; 
-		[c, λ, cbit, history, verb, η, runtype, usegpu, memoryefficient])
+		[σ, λ, cbit, history, verb, η, runtype, usegpu, memoryefficient])
 
 Trains the WAE neural net.
 
@@ -228,7 +228,7 @@ Trains the WAE neural net.
 	X - data array with instances as columns
 	batchsize - batchsize
 	nepochs - number of epochs
-	c - scaling parameter of the MMD
+	σ - scaling parameter of the MMD
 	λ - scaling for the MMD loss
 	cbit [200] - after this # of iterations, progress is updated
 	history [nothing] - a dictionary for training progress control
@@ -240,7 +240,7 @@ Trains the WAE neural net.
 	memoryefficient - calls gc after every batch, again saving some memory but prolonging computation
 """
 function fit!(wae::WAE, X, batchsize::Int, nepochs::Int; 
-	c::Real=1.0, λ::Real=1.0, cbit::Int=200, history = nothing, opt=nothing,
+	σ::Real=1.0, λ::Real=1.0, cbit::Int=200, history = nothing, opt=nothing,
 	verb::Bool = true, η = 0.001, runtype = "experimental", trainkwargs...)
 	@assert runtype in ["experimental", "fast"]
 	# sampler
@@ -262,7 +262,7 @@ function fit!(wae::WAE, X, batchsize::Int, nepochs::Int;
 		cb = basic_callback(history,verb,η,cbit; 
 			train_length = nepochs*epochsize,
 			epoch_size = epochsize)
-		_cb(m::WAE,d,l,o) =  cb(m,d,l,o,c,λ)
+		_cb(m::WAE,d,l,o) =  cb(m,d,l,o,σ,λ)
 	elseif runtype == "fast"
 		_cb = fast_callback 
 	end
@@ -273,7 +273,7 @@ function fit!(wae::WAE, X, batchsize::Int, nepochs::Int;
 	train!(
 		wae,
 		collect(sampler),
-		x->loss(wae,x,c,λ),
+		x->loss(wae,x,σ,λ),
 		opt,
 		_cb;
 		trainkwargs...

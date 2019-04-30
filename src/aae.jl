@@ -154,7 +154,7 @@ Discriminator loss given code Z and original sample X. If Z not given,
 it is autoamtically generated using the prescribed pz.
 """
 dloss(aae::AAE,X,Z) = dloss(aae.discriminator, aae.f_encoder, Z, X)
-dloss(aae::AAE,X) = dloss(aae, X, aae.pz(size(X,2)))  
+dloss(aae::AAE,X) = dloss(aae, X, aae.pz(size(X,ndims(X))))  
 # note that X and Z is swapped here from the normal notation
 
 """
@@ -181,7 +181,7 @@ getlosses(aae::AAE, X, Z) =  (
 		Flux.Tracker.data(dloss(aae,X,Z)),
 		Flux.Tracker.data(gloss(aae,X))
 		)
-getlosses(aae::AAE, X) = getlosses(aae::AAE, X, aae.pz(size(X,2)))
+getlosses(aae::AAE, X) = getlosses(aae::AAE, X, aae.pz(size(X,ndims(X))))
 
 """
 	evalloss(AAE, X[, Z])

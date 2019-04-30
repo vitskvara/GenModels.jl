@@ -128,7 +128,6 @@ function samplenormal!(X, ϵ)
     return samplenormal!(μ, σ2,ϵ)
 end
 
-
 """
    samplenormal_scalarvar(X)
 
@@ -165,25 +164,25 @@ Gaussian kernel of x and y.
 rbf(x,y,σ) = exp.(-(sum((x-y).^2,dims=1)/(2*σ)))
 
 """
-    imq(x,y,c)
+    imq(x,y,σ)
 
 Inverse multiquadratics kernel of x and y.    
 """
-imq(x,y,c) = c./(c.+sum(((x-y).^2),dims=1))
+imq(x,y,σ) = σ./(σ.+sum(((x-y).^2),dims=1))
 
 """
-    ekxy(k,X,Y,c)
+    ekxy(k,X,Y,σ)
 
-E_{x in X,y in Y}[k(x,y,c)] - mean value of kernel k.
+E_{x in X,y in Y}[k(x,y,σ)] - mean value of kernel k.
 """
-ekxy(k,X,Y,c) = mean(k(X,Y,c))
+ekxy(k,X,Y,σ) = mean(k(X,Y,σ))
 
 """
-    MMD(k,X,Y,c)
+    MMD(k,X,Y,σ)
 
-Maximum mean discrepancy for samples X and Y given kernel k and parameter c.    
+Maximum mean discrepancy for samples X and Y given kernel k and parameter σ.    
 """
-MMD(k,X,Y,c) = ekxy(k,X,X,c) - 2*ekxy(k,X,Y,c) + ekxy(k,Y,Y,c)
+MMD(k,X,Y,σ) = ekxy(k,X,X,σ) - 2*ekxy(k,X,Y,σ) + ekxy(k,Y,Y,σ)
 
 # other auxiliary functions
 """
