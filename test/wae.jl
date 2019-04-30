@@ -82,6 +82,10 @@ N = 10
 	GenerativeModels.update!(model, opt)
 	@test all(paramchange(eparams, model.encoder))
 	@test all(paramchange(dparams, model.decoder))
+
+	# test sampling
+	@test size(GenerativeModels.sample(model)) == (xdim,1)
+	@test size(GenerativeModels.sample(model,7)) == (xdim,7)
 	
 	# test the fit function
 	hist = MVHistory()

@@ -88,9 +88,16 @@ sigma2_scalarvar(X) = softplus.(X[end,:]) .+ δ
 sigma2_scalarvar(X::AbstractArray{T,4}) where T = StatsBase.mean(softplus.(X[:,:,Int(size(X,3)/2+1):end,:]) .+ δ, dims=[1,2])
 
 """
+    randn_gpu(T,m,n)
+
+GPU version of randn.
+"""
+randn_gpu(T,m,n) = gpu(randn(T,m,n))
+
+"""
    samplenormal(μ, σ2)
 
-Sample  a normal distribution with given mean and standard deviation.
+Sample a normal distribution with given mean and standard deviation.
 """
 function samplenormal(μ, σ2)
     ϵ = randn(Float, size(μ))    

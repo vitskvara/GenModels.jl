@@ -3,7 +3,7 @@
 
 Flux-like structure for the two-stage variational autoencoder.
 """
-struct TSVAE <: GenerativeModel
+mutable struct TSVAE <: GenerativeModel
 	m1::VAE
 	m2::VAE
 end

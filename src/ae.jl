@@ -7,7 +7,7 @@
 
 Flux-like structure for the basic autoencoder.
 """
-struct AE{E, D} <: GenerativeModel
+mutable struct AE{E, D} <: GenerativeModel
 	encoder::E
 	decoder::D
 end

@@ -198,3 +198,97 @@ end
 	# were the layers realy trained?
 	@test all(paramchange(frozen_params, model))
 end
+
+@testset "AAE-GPU" begin
+	x = GenerativeModels.Float.(hcat(ones(xdim, Int(N/2)), zeros(xdim, Int(N/2))))
+	gx = x |> gpu
+	Random.seed!(12345)
+    model = GenerativeModels.AAE(xdim, ldim, 3, 3, GenerativeModels.randn_gpu) |> gpu
+ 	_x = model(gx)
+	# for training check
+	frozen_params = getparams(model)
+
+	@test typeof(gx) == CuArray{GenerativeModels.Float,2}
+	@test typeof(_x) <: TrackedArray{GenerativeModels.Float,2}    
+	history = MVHistory()
+    GenerativeModels.fit!(model, x, 5, 500; history = history, verb = false, usegpu = true,
+    	memoryefficient = false)
+    _,ls = get(history,:aeloss)
+	@test ls[1] > ls[end] 
+	# were the layers realy trained?
+	@test all(paramchange(frozen_params, model)) 
+end
+
+@testset "ConvAAE - GPU" begin
+	m,n,c,k = (8,8,1,N)	
+    Random.seed!(12345)
+    X = randn(GenerativeModels.Float, m,n,c,k)
+    gX = X |> gpu
+    nconv = 2
+    kernelsize = 3
+    channels = (2,4)
+    scaling = 2
+    # unit model
+    model = GenerativeModels.ConvAAE((m,n,c), ldim, 4, nconv, kernelsize, channels, scaling, 
+    	GenerativeModels.randn_gpu; hdim = 10) |> gpu
+    _X = model(gX)
+	# for training check
+	frozen_params = getparams(model)
+	@test typeof(_X) <: TrackedArray{GenerativeModels.Float,4}    
+	@test typeof(_X.data) == CuArray{GenerativeModels.Float, 4}
+	@test GenerativeModels.iscuarray(_X)
+	hist = MVHistory()
+	GenerativeModels.fit!(model, X, 5, 10, history = hist, verb = false,
+		usegpu = true, memoryefficient = false)
+	is, ls = get(hist, :aeloss)
+	@test ls[1] > ls[end] 
+	# were the layers realy trained?
+	@test all(paramchange(frozen_params, model)) 
+end
+
+@testset "WAE-GPU" begin
+	x = GenerativeModels.Float.(hcat(ones(xdim, Int(N/2)), zeros(xdim, Int(N/2))))
+	gx = x |> gpu
+	Random.seed!(12345)
+    model = GenerativeModels.WAE(xdim, ldim, 3, GenerativeModels.randn_gpu) |> gpu
+ 	_x = model(gx)
+	# for training check
+	frozen_params = getparams(model)
+
+	@test typeof(gx) == CuArray{GenerativeModels.Float,2}
+	@test typeof(_x) <: TrackedArray{GenerativeModels.Float,2}    
+	history = MVHistory()
+    GenerativeModels.fit!(model, x, 5, 500; σ=1.0, λ=1.0, history = history, verb = false, usegpu = true,
+    	memoryefficient = false)
+    _,ls = get(history,:loss)
+	@test ls[1] > ls[end] 
+	# were the layers realy trained?
+	@test all(paramchange(frozen_params, model)) 
+end
+
+@testset "ConvWAE - GPU" begin
+	m,n,c,k = (8,8,1,N)	
+    Random.seed!(12345)
+    X = randn(GenerativeModels.Float, m,n,c,k)
+    gX = X |> gpu
+    nconv = 2
+    kernelsize = 3
+    channels = (2,4)
+    scaling = 2
+    # unit model
+    model = GenerativeModels.ConvWAE((m,n,c), ldim, nconv, kernelsize, channels, scaling, 
+    	GenerativeModels.randn_gpu; kernel = GenerativeModels.imq) |> gpu
+    _X = model(gX)
+	# for training check
+	frozen_params = getparams(model)
+	@test typeof(_X) <: TrackedArray{GenerativeModels.Float,4}    
+	@test typeof(_X.data) == CuArray{GenerativeModels.Float, 4}
+	@test GenerativeModels.iscuarray(_X)
+	hist = MVHistory()
+	GenerativeModels.fit!(model, X, 5, 10; σ=1.0, λ=1.0, history = hist, verb = false,
+		usegpu = true, memoryefficient = false)
+	is, ls = get(hist, :loss)
+	@test ls[1] > ls[end] 
+	# were the layers realy trained?
+	@test all(paramchange(frozen_params, model)) 
+end

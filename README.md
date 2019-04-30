@@ -9,3 +9,4 @@ A collection of deep neural generative models based on the Flux library. Most mo
 | VAE | Variational Autoencoder | Kingma, Diederik P., and Max Welling. "Auto-encoding variational bayes." arXiv preprint arXiv:1312.6114 (2013). [link](arxiv.org/abs/1312.6114) |
 | TSVAE | Two-stage Variational Autoencoder | Dai, Bin, and David Wipf. "Diagnosing and enhancing vae models." arXiv preprint arXiv:1903.05789 (2019). [link](https://arxiv.org/abs/1903.05789) |
 | AAE | Adversarial Autoencoder | Makhzani, Alireza, et al. "Adversarial autoencoders." arXiv preprint arXiv:1511.05644 (2015). [link](https://arxiv.org/abs/1511.05644) |
+| WAE | Wasserstein Autoencoder with MMD loss | Tolstikhin, Ilya, et al. "Wasserstein auto-encoders." arXiv preprint arXiv:1711.01558 (2017). [link](https://arxiv.org/abs/1711.01558) |

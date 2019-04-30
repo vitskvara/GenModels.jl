@@ -108,6 +108,10 @@ N = 10
 	is, ls = get(hist, :aeloss)
 	@test ls[1] > ls[end] 
 
+	# test sampling
+	@test size(GenerativeModels.sample(model)) == (xdim,1)
+	@test size(GenerativeModels.sample(model,7)) == (xdim,7)
+
 	# convolutional AAE
 	data = randn(Float32,32,16,1,8);
 	m,n,c,k = size(data)
