@@ -19,9 +19,9 @@ Is X a CuArray?
 """
 function iscuarray(X) 
     if typeof(X) <: TrackedArray
-        return (string(typeof(X.data)) in ["CuArray{$(Float),$i}" for i in 1:10])
+        return occursin("CuArray", string(typeof(X.data)))
     else
-        return (string(typeof(X)) in ["CuArray{$(Float),$i}" for i in 1:10])
+        return occursin("CuArray", string(typeof(X)))
     end
 end
 
