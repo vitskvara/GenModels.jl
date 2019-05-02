@@ -77,7 +77,7 @@ end
 
 """
 	ConvAE(insize, zdim, nconv, kernelsize, channels, scaling; 
-		[hdim, ndense, dsizes, activation, stride, batchnorm, outbatchnorm])
+		[ndense, dsizes, activation, stride, batchnorm, outbatchnorm])
 
 Initializes a convolutional autoencoder.
 
@@ -87,7 +87,6 @@ Initializes a convolutional autoencoder.
 	kernelsize = Int or a tuple/vector of ints
 	channels = a tuple/vector of number of channels
 	scaling = Int or a tuple/vector of ints
-	hdim = widht of layers in the discriminator
 	ndense = number of dense layers
 	dsizes = vector of dense layer widths
 	activation = type of nonlinearity

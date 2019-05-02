@@ -17,13 +17,7 @@ freeze(m) = Flux.mapleaves(Flux.Tracker.data,m)
 
 Is X a CuArray?
 """
-function iscuarray(X) 
-    if typeof(X) <: TrackedArray
-        return occursin("CuArray", string(typeof(X.data)))
-    else
-        return occursin("CuArray", string(typeof(X)))
-    end
-end
+iscuarray(X) = occursin("CuArray", string(typeof(Flux.Tracker.data(X))))
 
 # this should be done properly but I dont know how
 # now it detects whether X is not a (Tracked)Array
