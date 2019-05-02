@@ -19,9 +19,6 @@ Is X a CuArray?
 """
 iscuarray(X) = occursin("CuArray", string(typeof(Flux.Tracker.data(X))))
 
-# this should be done properly but I dont know how
-# now it detects whether X is not a (Tracked)Array
-
 # from FluxExtensions
 """
     function layerbuilder(d::Int,k::Int,o::Int,n::Int,ftype::String,lastlayer::String = "",ltype::String = "Dense")
