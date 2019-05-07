@@ -1,44 +1,46 @@
 """
-	AAE{encoder, decoder, discriminator, pz}
+	WAAE{encoder, decoder, discriminator, pz, kernel}
 
-Flux-like structure of the adversarial autoencoder.
+Flux-like structure of the wasserstein adversarial autoencoder.
 """
-mutable struct AAE{E, FE, DE, DS, FDS, PZ} <: GenerativeModel
+mutable struct WAAE{E, FE, DE, DS, FDS, PZ, K} <: GenerativeModel
 	encoder::E 
 	f_encoder::FE # frozen encoder copy
 	decoder::DE
 	discriminator::DS
 	f_discriminator::FDS # frozen discriminator copy
 	pz::PZ
+	kernel::K
 end
 """
-	AAE(e, de, ds, pz)
+	WAAE(e, de, ds, pz, k)
 
-Construct AAE given encoder, decoder, discriminator and pz(n), where n is number of samples and
+Construct AAE given encoder, decoder, discriminator, kernel and pz(n), where n is number of samples and
 is compatible with the dimension of encoder output.
 """
-AAE(e, de, ds, pz) = AAE(e, freeze(e), de, ds, freeze(ds), pz) # default constructor 
+WAAE(e, de, ds, pz, k) = WAAE(e, freeze(e), de, ds, freeze(ds), pz, k) # default constructor 
 
 # make the struct callable
-(aae::AAE)(X) = aae.decoder(aae.encoder(X))
+(waae::WAAE)(X) = waae.decoder(waae.encoder(X))
 
 # and make it trainable
-Flux.@treelike AAE
+Flux.@treelike WAAE
 
 """
-	AAE(esize, decsize, dissize[, pz]; [activation, layer])
+	WAAE(esize, decsize, dissize[, pz]; [kernel, activation, layer])
 
-Initialize an adversarial autoencoder.
+Initialize a wasserstein adversarial autoencoder.
 
 	esize = vector of ints specifying the width anf number of layers of the encoder
 	decsize = size of decoder
 	dissize = size of discriminator
 	pz = sampling distribution that can be called as pz(T,dim,nsamples)
+	kernel = default rbf kernel
 	activation [Flux.relu] = arbitrary activation function
 	layer [Flux.Dense] = layer type
 """
-function AAE(esize::Array{Int64,1}, decsize::Array{Int64,1}, dissize::Array{Int64,1}, 
-	pz = randn; activation = Flux.relu,	layer = Flux.Dense)
+function WAAE(esize::Array{Int64,1}, decsize::Array{Int64,1}, dissize::Array{Int64,1}, 
+	pz = randn; kernel=rbf, activation = Flux.relu,	layer = Flux.Dense)
 	@assert size(esize, 1) >= 3
 	@assert size(decsize, 1) >= 3
 	@assert size(dissize, 1) >= 3
@@ -57,15 +59,15 @@ function AAE(esize::Array{Int64,1}, decsize::Array{Int64,1}, dissize::Array{Int6
 	discriminator = discriminatorbuilder(dissize, activation, layer)
 
 	# finally construct the ae struct
-	aae = AAE(encoder, decoder, discriminator, n->pz(Float,esize[end],n))
+	waae = WAAE(encoder, decoder, discriminator, n->pz(Float,esize[end],n), kernel)
 
-	return aae
+	return waae
 end
 
 """
-	AAE(xdim, zdim, ae_nlayers, disc_nlayers[, pz]; [hdim, activation, layer])
+	WAAE(xdim, zdim, ae_nlayers, disc_nlayers[, pz]; [kernel, hdim, activation, layer])
 
-Initialize an adversarial autoencoder given input and latent dimension 
+Initialize a wasserstein adversarial autoencoder given input and latent dimension 
 and number of layers.
 
 	xdim = input size
@@ -73,12 +75,13 @@ and number of layers.
 	ae_nlayers = number of layers of the autoencoder
 	disc_nlayers = number of layers of the discriminator
 	pz = sampling distribution that can be called as pz(T,dim,nsamples)
+	kernel = default rbf kernel
 	hdim = width of layers, if not specified, it is linearly interpolated
 	activation [Flux.relu] = arbitrary activation function
 	layer [Flux.Dense] = layer type
 """
-function AAE(xdim::Int, zdim::Int, ae_nlayers::Int, disc_nlayers::Int, 
-	pz = randn; hdim = nothing, activation = Flux.relu, layer = Flux.Dense)
+function WAAE(xdim::Int, zdim::Int, ae_nlayers::Int, disc_nlayers::Int, 
+	pz = randn; kernel=rbf, hdim = nothing, activation = Flux.relu, layer = Flux.Dense)
 	@assert ae_nlayers >= 2
 	@assert disc_nlayers >= 2
 
@@ -93,12 +96,12 @@ function AAE(xdim::Int, zdim::Int, ae_nlayers::Int, disc_nlayers::Int,
 	decsize = reverse(esize)
 	
 	# finally return the structure
-	AAE(esize,decsize, dissize, pz; activation=activation, layer=layer)
+	WAAE(esize,decsize, dissize, pz; kernel=kernel, activation=activation, layer=layer)
 end
 
 """
-	ConvAAE(insize, zdim, disc_nlayers, nconv, kernelsize, channels, scaling[, pz]; 
-		[hdim, ndense, dsizes, activation, stride, batchnorm, outbatchnorm])
+	ConvWAAE(insize, zdim, disc_nlayers, nconv, kernelsize, channels, scaling[, pz]; 
+		[kernel, hdim, ndense, dsizes, activation, stride, batchnorm, outbatchnorm])
 
 Initialize a convolutional adversarial autoencoder. 
 	
@@ -110,6 +113,7 @@ Initialize a convolutional adversarial autoencoder.
 	channels = a tuple/vector of number of channels
 	scaling = Int or a tuple/vector of ints
 	pz = sampling distribution that can be called as pz(T,dim,nsamples)
+	kernel = default rbf kernel
 	hdim = widht of layers in the discriminator
 	ndense = number of dense layers
 	dsizes = vector of dense layer widths
@@ -118,9 +122,9 @@ Initialize a convolutional adversarial autoencoder.
 	batchnorm = use batchnorm in convolutional layers
 	outbatchnorm = use batchnorm on the outpu of encoder
 """
-function ConvAAE(insize, zdim, disc_nlayers, nconv, kernelsize, channels, scaling, pz=randn; 
+function ConvWAAE(insize, zdim, disc_nlayers, nconv, kernelsize, channels, scaling, pz=randn; 
 	outbatchnorm=false, hdim=nothing, activation=Flux.relu, layer=Flux.Dense,
-	kwargs...)
+	kernel=rbf, kwargs...)
 	# first build the convolutional encoder and decoder
 	encoder = convencoder(insize, zdim, nconv, kernelsize, 
 		channels, scaling; outbatchnorm=outbatchnorm, activation = activation, kwargs...)
@@ -133,7 +137,7 @@ function ConvAAE(insize, zdim, disc_nlayers, nconv, kernelsize, channels, scalin
 		dissize = vcat([zdim], fill(hdim, disc_nlayers-1), [1])
 	end
 	discriminator = discriminatorbuilder(dissize, activation, layer)
-	return AAE(encoder, decoder, discriminator, n->pz(Float,zdim,n))
+	return WAAE(encoder, decoder, discriminator, n->pz(Float,zdim,n), kernel)
 end
 
 ################
@@ -141,129 +145,152 @@ end
 ################
 
 """
-	aeloss(AAE, X)
+	aeloss(WAAE, X)
 
 Autoencoder loss.
 """
-aeloss(aae::AAE,X) = Flux.mse(X,aae(X))
+aeloss(waae::WAAE,X) = Flux.mse(X,waae(X))
 
 """
-	dloss(AAE,X[,Z])
+	dloss(WAAE,X[,Z])
 
 Discriminator loss given code Z and original sample X. If Z not given, 
 it is autoamtically generated using the prescribed pz.
 """
-dloss(aae::AAE,X,Z) = dloss(aae.discriminator, aae.f_encoder, Z, X)
-dloss(aae::AAE,X) = dloss(aae, X, aae.pz(size(X,ndims(X))))  
+dloss(waae::WAAE,X,Z) = dloss(waae.discriminator, waae.f_encoder, Z, X)
+dloss(waae::WAAE,X) = dloss(waae, X, waae.pz(size(X,ndims(X))))  
 # note that X and Z is swapped here from the normal notation
 
 """
-	gloss(AAE,X)
+	gloss(WAAE,X)
 
 Encoder/generator loss.
 """
-gloss(aae::AAE,X) = gloss(aae.f_discriminator, aae.encoder,X)
+gloss(waae::WAAE,X) = gloss(waae.f_discriminator, waae.encoder,X)
 
 """
-	loss(AAE,X)
+	MMD(WAAE, X[, Z], σ)
 
-Adversarial autoencoder loss (MSE).
+MMD for a given sample X, scaling constant σ. If Z is not given, it is automatically generated 
+from the model's pz.
 """
-loss(aae::AAE,X) = aeloss(aae,X)
+MMD(waae::WAAE, X::AbstractArray, Z::AbstractArray, σ) = MMD(waae.kernel, waae.encoder(X), Z, Float(σ))
+MMD(waae::WAAE, X::AbstractArray, σ) = MMD(waae.kernel, waae.encoder(X), waae.pz(size(X,ndims(X))), Float(σ))
 
 """
-	getlosses(AAE, X[, Z])
+	loss(WAAE,X)
+
+Autoencoder loss (MSE).
+"""
+loss(waae::WAAE, X::AbstractArray, Z::AbstractArray, σ, λ::Real, γ::Real) = aeloss(waae, X) + Float(λ)*MMD(waae, X, Z, σ) + Float(γ)*gloss(waae,X) + Float(γ)*dloss(waae,X)
+loss(waae::WAAE, X::AbstractArray, σ, λ::Real, γ::Real) = aeloss(waae, X) + Float(λ)*MMD(waae, X, σ) + Float(γ)*gloss(waae,X) + Float(γ)*dloss(waae,X)
+
+"""
+	getlosses(WAAE, X[, Z], σ, λ)
 
 Return the numeric values of current losses.
 """
-getlosses(aae::AAE, X, Z) =  (
-		Flux.Tracker.data(aeloss(aae,X)),
-		Flux.Tracker.data(dloss(aae,X,Z)),
-		Flux.Tracker.data(gloss(aae,X))
+getlosses(waae::WAAE, X::AbstractArray, Z::AbstractArray, σ, λ::Real, γ::Real) =  (
+		Flux.Tracker.data(loss(waae,X,Z,σ,λ,γ)),
+		Flux.Tracker.data(aeloss(waae,X)),
+		Flux.Tracker.data(dloss(waae,X,Z)),
+		Flux.Tracker.data(gloss(waae,X)),
+		Flux.Tracker.data(MMD(waae,X,Z,σ))
 		)
-getlosses(aae::AAE, X) = getlosses(aae::AAE, X, aae.pz(size(X,ndims(X))))
+getlosses(waae::WAAE, X::AbstractArray, σ, λ::Real, γ::Real) = getlosses(waae::WAAE, X, waae.pz(size(X,ndims(X))), σ, λ, γ)
 
 """
-	evalloss(AAE, X[, Z])
+	evalloss(WAAE, X[, Z], σ, λ)
 
-Print AAE losses.
+Print WAAE losses.
 """
-function evalloss(aae::AAE, X, Z=nothing) 
-	ael, dl, gl = (Z == nothing) ?  getlosses(aae, X) : getlosses(aae, X, Z)
-	print("autoencoder loss: ", l,
+function evalloss(waae::WAAE, X::AbstractArray, Z::AbstractArray, σ, λ::Real, γ::Real) 
+	l, ael, dl, gl, mmd = getlosses(waae, X, Z, σ, λ, γ)
+	print("total loss: ", l,
+	"\nautoencoder loss: ", ael,
 	"\ndiscriminator loss: ", dl,
-	"\ngenerator loss: ", gl, "\n\n")
+	"\ngenerator loss: ", gl,
+	"\nMMD loss: ", mmd, "\n\n")
 end
+evalloss(waae::WAAE, X::AbstractArray, σ, λ::Real, γ::Real) = evalloss(waae::WAAE, X, waae.pz(size(X,2)), σ, λ, γ)
 
 """
-	getlsize(AAE)
+	getlsize(WAAE)
 
 Return size of the latent code.
 """
-getlsize(aae::AAE) = size(aae.encoder.layers[end].W,1)
+getlsize(waae::WAAE) = size(waae.encoder.layers[end].W,1)
 
 """
-	track!(AAE, history, X)
+	track!(WAAE, history, X)
 
 Save current progress.
 """
-function track!(aae::AAE, history::MVHistory, X)
-	ael, dl, gl = getlosses(aae, X)
+function track!(waae::WAAE, history::MVHistory, X::AbstractArray, σ, λ::Real,γ::Real)
+	l, ael, dl, gl, mmd = getlosses(waae, X, σ, λ,γ)
+	push!(history, :loss, l)
 	push!(history, :aeloss, ael)
 	push!(history, :dloss, dl)
 	push!(history, :gloss, gl)
+	push!(history, :mmd, mmd)
 end
 
 """
-	(cb::basic_callback)(AAE, d, l, opt)
+	(cb::basic_callback)(WAAE, d, l, opt, σ, λ)
 
 Callback for the train! function.
 TODO: stopping condition, change learning rate.
 """
-function (cb::basic_callback)(m::AAE, d, l, opt)
+function (cb::basic_callback)(m::WAAE, d, l, opt, σ, λ::Real,γ::Real)
 	# update iteration count
 	cb.iter_counter += 1
 	# save training progress to a MVHistory
 	if cb.history != nothing
-		track!(m, cb.history, d)
+		track!(m, cb.history, d, σ, λ, γ)
 	end
 	# verbal output
 	if cb.verb 
 		# if first iteration or a progress print iteration
 		# recalculate the shown values
 		if (cb.iter_counter%cb.show_it == 0 || cb.iter_counter == 1)
-			ls = getlosses(m, d)
+			ls = getlosses(m, d, σ, λ, γ)
 			cb.progress_vals = Array{Any,1}()
 			push!(cb.progress_vals, ceil(Int, cb.iter_counter/cb.epoch_size))
 			push!(cb.progress_vals, cb.iter_counter)
 			push!(cb.progress_vals, ls[1])
 			push!(cb.progress_vals, ls[2])
 			push!(cb.progress_vals, ls[3])
+			push!(cb.progress_vals, ls[4])
+			push!(cb.progress_vals, ls[5])
 		end
 		# now give them to the progress bar object
 		ProgressMeter.next!(cb.progress; showvalues = [
 			(:epoch,cb.progress_vals[1]),
 			(:iteration,cb.progress_vals[2]),
-			(:aeloss,cb.progress_vals[3]),
-			(:dloss,cb.progress_vals[4]),
-			(:gloss,cb.progress_vals[5])
+			(:loss,cb.progress_vals[3]),
+			(:aeloss,cb.progress_vals[4]),
+			(:dloss,cb.progress_vals[5]),
+			(:gloss,cb.progress_vals[6]),
+			(:mmd,cb.progress_vals[7])
 			])
 	end
 end
 
 """
-	fit!(AAE, X, batchsize, nepochs[, cbit, history, opt, verb, η, 
-		runtype, usegpu, memoryefficient])
+	fit!(WAAE, X, batchsize, nepochs; 
+		[σ, λ, cbit, history, verb, η, runtype, usegpu, memoryefficient])
 
-Trains the AAE neural net.
+Trains the WAAE neural net.
 
-	AAE - an AAE object
+	WAAE - a WAAE object
 	X - data array with instances as columns
 	batchsize - batchsize
 	nepochs - number of epochs
+	σ - scaling parameter of the MMD
+	λ - scaling for the MMD loss
+	γ - scaling for the GAN loss
 	cbit [200] - after this # of iterations, progress is updated
 	history [nothing] - a dictionary for training progress control
-	opt [nothing] - provide a tuple of 3 optimizers
 	verb [true] - if output should be produced
 	η [0.001] - learning rate
 	runtype ["experimental"] - if fast is selected, no output and no history is written
@@ -271,10 +298,9 @@ Trains the AAE neural net.
 			than all data at once
 	memoryefficient - calls gc after every batch, again saving some memory but prolonging computation
 """
-function fit!(aae::AAE, X, batchsize::Int, nepochs::Int; 
-	cbit::Int=200, history = nothing, opt=nothing,
-	verb::Bool = true, η = 0.001, runtype = "experimental", 
-	prealloc_eps=false, trainkwargs...)
+function fit!(waae::WAAE, X, batchsize::Int, nepochs::Int; 
+	σ::Real=1.0, λ::Real=1.0, γ::Real=1.0, cbit::Int=200, history = nothing, opt=nothing,
+	verb::Bool = true, η = 0.001, runtype = "experimental", trainkwargs...)
 	@assert runtype in ["experimental", "fast"]
 	# sampler
 	sampler = EpochSampler(X,nepochs,batchsize)
@@ -282,17 +308,11 @@ function fit!(aae::AAE, X, batchsize::Int, nepochs::Int;
 	# it might be smaller than the original one if there is not enough data
 	batchsize = sampler.batchsize 
 
-	# loss
-	ael(x) = aeloss(aae,x)
-	dl(x) = dloss(aae,x)
-	gl(x) = gloss(aae,x)
-
+	# losses
+	
 	# optimizer
 	if opt == nothing
-		aeopt, dopt, gopt = fill(ADAM(η), 3)
-	else
-		@assert length(opt) == 3
-		aeopt, dopt, gopt = opt
+		opt = ADAM(η)
 	end
 	
 	# callback
@@ -300,30 +320,22 @@ function fit!(aae::AAE, X, batchsize::Int, nepochs::Int;
 		cb = basic_callback(history,verb,η,cbit; 
 			train_length = nepochs*epochsize,
 			epoch_size = epochsize)
-		_cb = cb
+		_cb(m::WAAE,d,l,o) =  cb(m,d,l,o,σ,λ,γ)
 	elseif runtype == "fast"
 		_cb = fast_callback 
 	end
 
-	# preallocation could be possibly added
+	# preallocate arrays?
 
 	# train
 	train!(
-		aae,
+		waae,
 		collect(sampler),
-		(ael, dl, gl),
-		(aeopt, dopt, gopt),
+		x->loss(waae,x,σ,λ,γ),
+		opt,
 		_cb;
 		trainkwargs...
 		)
-	
-	return aeopt, dopt, gopt
+
+	return opt
 end
-
-"""
-	sample(AAE[, M])
-
-Get samples generated by the AAE.
-"""
-StatsBase.sample(aae::AAE) = aae.decoder(aae.pz(1))
-StatsBase.sample(aae::AAE, M) = aae.decoder(aae.pz(M))

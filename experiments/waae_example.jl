@@ -31,11 +31,12 @@ hdim = 50
 nlayers = 3
 σ = 0.4
 λ = 1.0
+γ = 10.0
 kernel = GenerativeModels.imq
 nonlinearity = Flux.relu
-model = WAE(M, ldim, nlayers, binormal, kernel = kernel, hdim = hdim, activation=nonlinearity)
+model = GenerativeModels.WAAE(M, ldim, nlayers, nlayers, binormal, kernel = kernel, hdim = hdim, activation=nonlinearity)
 hist = MVHistory()
-GenerativeModels.fit!(model, X, 50, 2000, σ=σ, λ=λ, history=hist,verb=true)
+GenerativeModels.fit!(model, X, 50, 2000, σ=σ, λ=λ, γ=γ, history=hist,verb=true)
 
 rX = model(X).data
 figure(figsize=(10,5))
@@ -62,13 +63,15 @@ N = 200
 s = Float32.([30 10; 10 1])
 X = s*randn(Float32,M,N)
 
+γ = 1e1
+λ = 1e-1
 # construct and train the model
 ldim = 2
 hdim = 50
 nonlinearity = Flux.relu
-model = WAE(M, ldim, nlayers, binormal, kernel = kernel, hdim = hdim, activation=nonlinearity)
+model = GenerativeModels.WAAE(M, ldim, nlayers, nlayers, binormal, kernel = kernel, hdim = hdim, activation=nonlinearity)
 hist = MVHistory()
-GenerativeModels.fit!(model, X, 50, 5000, σ=σ, λ=λ, history=hist,verb=true)
+GenerativeModels.fit!(model, X, 50, 5000, σ=σ, λ=λ, γ=γ, history=hist,verb=true)
 
 rX = model(X).data
 figure(figsize=(10,5))

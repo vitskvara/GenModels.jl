@@ -59,12 +59,12 @@ s = Float32.([30 10; 10 1])
 X = s*randn(Float32,M,N)
 
 # construct and train the model
-ldim = 1
+ldim = 2
 hdim = 50
 nonlinearity = Flux.relu
-model = AAE(M, ldim, 3, 3, randn, hdim = hdim, activation=nonlinearity)
+model = AAE(M, ldim, 3, 3, binormal, hdim = hdim, activation=nonlinearity)
 hist = MVHistory()
-GenerativeModels.fit!(model, X, 50, 2000, history=hist,verb=true);
+GenerativeModels.fit!(model, X, 50, 5000, history=hist,verb=true);
 
 rX = model(X).data
 figure(figsize=(10,5))

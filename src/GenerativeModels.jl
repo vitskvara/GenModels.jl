@@ -20,6 +20,7 @@ include("vae.jl")
 include("tsvae.jl")
 include("aae.jl")
 include("wae.jl")
+include("waae.jl")
 
 export AE, AAE, VAE, TSVAE, WAE
 export ConvAE, ConvAAE, ConvVAE, ConvTSVAE, ConvWAE
