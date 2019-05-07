@@ -114,9 +114,10 @@ Initializes a convolutional autoencoder.
 	stride = Int or vecotr/tuple of ints
 	batchnorm = use batchnorm in convolutional layers
 """
-function ConvVAE(insize, zdim, nconv, kernelsize, channels, scaling; variant=:unit, kwargs...)
+function ConvVAE(insize, zdim, nconv, kernelsize, channels, scaling; variant=:unit, 
+	outbatchnorm = false, kwargs...)
 	encoder = convencoder(insize, zdim*2, nconv, kernelsize, 
-		channels, scaling; kwargs...)
+		channels, scaling; outbatchnorm=outbatchnorm, kwargs...)
 	if variant in [:diag, :scalar]
 		insize = [x for x in insize]
 		insize[end] = 2*insize[end]
