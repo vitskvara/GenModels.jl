@@ -1,3 +1,78 @@
+### model cosntruction and saving ###
+"""
+    construct_model(modelname[, model_params], modelargs...; modelkwargs...)
+
+Returns a model object given by modelname and arguments. If model_params are 
+supplied, they replace the initial random values of the model parameters, which
+is useful for restoring saved models.
+"""
+function construct_model(modelname, modelargs...; modelkwargs...)
+    if eltype(modelargs) <: Pair
+        return eval(Meta.parse("$modelname"))([x[2] for x in modelargs]...; modelkwargs...)
+    else
+        return eval(Meta.parse("$modelname"))(modelargs...; modelkwargs...)
+    end
+end
+
+"""
+    construct_model(file[, modelname])
+
+Construct and return a copy of a model saved in the file. If needed, supply
+the name of the constructor function via modelname.
+"""
+function construct_model(file::String, modelname; model_data = nothing)
+    if model_data == nothing
+        model_data = BSON.load(file)
+    end
+    model = construct_model(modelname,
+        model_data[:model_args]...; model_data[:model_kwargs]...)
+    replace_params!(model, model_data[:model_params])
+    return model
+end
+function construct_model(file::String)
+    model_data = BSON.load(file)
+    return construct_model(file, model_data[:model_name]; model_data=model_data)
+end
+
+"""
+    save_model(file, model[; modelname, kwargs...])
+
+Save the model params to a BSON file. If model name is not supplied, it is automatically 
+generated from the show string of the model. Additional arguments are saved as well 
+(e.g. model construction args and kwargs).
+
+    args = [
+            :xdim => 3,
+            :zdim => 2,
+            :nlayers => 3
+        ]
+    kwargs = Dict(
+            :hdim => 10
+        )
+    modelname = "AE"
+    model = GenerativeModels.construct_model(modelname, args...; kwargs...)
+    GenerativeModels.save_model("model.bson", model, modelname=modelname, model_args=args,
+        model_kwargs=kwargs)
+"""
+function save_model(file, model; modelname=nothing, kwargs...) 
+    if modelname == nothing
+        modelname = string(split(string(model),"{")[1])
+    end
+    BSON.bson(file, model_params = [x.data for x in params(model)], model_name = modelname; 
+        kwargs...)
+end
+
+"""
+    replace_params!(model, parameters)
+
+    Replaces alle the paremeters in a model using the values in given array.
+"""
+replace_params!(model, parameters) = map(x->x[1].data.=x[2],zip(params(model),parameters))
+
+#########################
+### general functions ###
+#########################
+
 """
     adapt(T, m)
 

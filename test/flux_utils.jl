@@ -7,10 +7,34 @@ include(joinpath(dirname(pathof(GenerativeModels)), "../test/test_utils.jl"))
 xdim = 3
 ldim = 1
 N = 10
-model = Flux.Chain(Flux.Dense(xdim, ldim), Flux.Dense(ldim, xdim))
 
 @testset "flux utils" begin 
+	# model saving
+    args = [
+        :xdim => 3,
+        :zdim => 2,
+        :nlayers => 3
+    ]
+    kwargs = Dict(
+            :hdim => 10
+        )
+    modelname = "AE"
+    model = GenerativeModels.construct_model(modelname, args...; kwargs...)
+    @test length(model.encoder.layers) == args[3][2]
+    @test size(model.decoder.layers[1].W,2) == args[2][2]
+    @test size(model.decoder.layers[1].W,1) == kwargs[:hdim]
+    mf = "model.bson"
+    GenerativeModels.save_model(mf, model, modelname=modelname, model_args=args,
+        model_kwargs=kwargs)
+    @test isfile(mf)
+    model2 = GenerativeModels.construct_model(mf)
+    for (p1,p2) in zip(params(model), params(model2))
+    	@test all(p1 .== p2)
+    end
+    rm(mf)
+
 	# adapt
+	model = Flux.Chain(Flux.Dense(xdim, ldim), Flux.Dense(ldim, xdim))
 	m32 = GenerativeModels.adapt(Float32, model)
 	@test typeof(m32.layers[1].W.data[1]) == Float32
 	m64 = GenerativeModels.adapt(Float64, model)

@@ -7,6 +7,7 @@ using StatsBase # for samplers
 using ProgressMeter
 using SparseArrays
 using Random
+using BSON
 import Base.collect
 
 const Float = Float32
