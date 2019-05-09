@@ -22,8 +22,8 @@ include("aae.jl")
 include("wae.jl")
 include("waae.jl")
 
-export AE, AAE, VAE, TSVAE, WAE
-export ConvAE, ConvAAE, ConvVAE, ConvTSVAE, ConvWAE
+export AE, AAE, VAE, TSVAE, WAE, WAAE
+export ConvAE, ConvAAE, ConvVAE, ConvTSVAE, ConvWAE, ConvWAAE
 export fit!
 
 end # module
