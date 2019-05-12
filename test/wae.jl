@@ -33,6 +33,9 @@ N = 10
 	z = model.pz(N)
 	@test size(_x) == size(x)
 	@test size(z,2) == N
+	# encoding
+	@test size(GenerativeModels.encode(model, x)) == (ldim,N)
+	@test size(GenerativeModels.encode(model, x, 3)) == (ldim,N)
 
 	# loss functions
 	σ = 1.0
@@ -117,5 +120,8 @@ N = 10
 	@test all(paramchange(frozen_params, model))	
 	(i,ls) = get(hist,:aeloss)
 	@test ls[end] < ls[1]
+	# encoding
+	@test size(GenerativeModels.encode(model, data)) == (latentdim,k)
+	@test size(GenerativeModels.encode(model, data,3)) == (latentdim,k)
 
 end

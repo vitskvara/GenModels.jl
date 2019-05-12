@@ -37,6 +37,9 @@ N = 10
 	@test size(model.encoder.layers[1].W,1) == 10
 	@test size(model.encoder.layers[end].W,2) == 10
 	@test size(model.discriminator.layers[1].W,1) == 10
+	# encoding
+	@test size(GenerativeModels.encode(model, x)) == (ldim,N)
+	@test size(GenerativeModels.encode(model, x, 3)) == (ldim,N)
 
 	# loss functions
 	ael = GenerativeModels.aeloss(model,x)
@@ -139,4 +142,7 @@ N = 10
 	@test all(paramchange(frozen_params, model))	
 	(i,ls) = get(hist,:aeloss)
 	@test ls[end] < ls[1]
+	# encoding
+	@test size(GenerativeModels.encode(model, data)) == (latentdim,k)
+	@test size(GenerativeModels.encode(model, data,3)) == (latentdim,k)
 end

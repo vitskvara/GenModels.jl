@@ -331,6 +331,13 @@ end
 
 ##### auxiliary functions #####
 """
+	encode(VAE, X)
+
+Latent (sampled) representation of X given VAE.
+"""
+encode(model::VAE, X) = model.sampler(model.encoder(X))
+
+"""
 	isconvvae(model)
 
 Decides whether a VAE model is a convolutional one or not.

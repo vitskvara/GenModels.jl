@@ -31,6 +31,9 @@ N = 10
 	@test size(_x) == (xdim,N)
 	# test output types
 	@test typeof(_x) <: Flux.TrackedArray{GenerativeModels.Float,2}
+	# encoding
+	@test size(GenerativeModels.encode(model, x)) == (ldim,N)
+	@test size(GenerativeModels.encode(model, x, 3)) == (ldim,N)
 
 	# loss functions
 	kl = GenerativeModels.KL(model,x)
@@ -50,7 +53,7 @@ N = 10
 	GenerativeModels.track!(model, hist, x, 10, 0.01)
 	is, ls = get(hist, :loss)
 	@test abs(ls[1] - l) < 2e-1
-	@test abs(ls[1] - ls[2]) < 1e-1
+	@test abs(ls[1] - ls[2]) < 2e-1
 	# training
 	GenerativeModels.fit!(model, x, 5, 100, beta =0.1, cbit=5, history = hist, verb = false)
 	is, ls = get(hist, :loss)
@@ -199,4 +202,8 @@ N = 10
 	gx = GenerativeModels.sample(model,5)
 	@test typeof(gx) <: Flux.TrackedArray{GenerativeModels.Float,4}
 	@test size(gx) == (m,n,c,5)
+	# encoding
+	@test size(GenerativeModels.encode(model, data)) == (latentdim,k)
+	@test size(GenerativeModels.encode(model, data,3)) == (latentdim,k)
+
 end

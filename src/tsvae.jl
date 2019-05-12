@@ -160,3 +160,5 @@ end
 function StatsBase.sample(tsvae::TSVAE, M::Int)
 	samplenormal_scalarvar(tsvae.m1.decoder(sample(tsvae.m2,M)))
 end
+
+encode(model::TSVAE, X) = encode(model.m1, X)

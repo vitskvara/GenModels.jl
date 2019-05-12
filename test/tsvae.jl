@@ -24,6 +24,9 @@ N = 100
    	@test size(model.m1(x)) == size(_x)
    	@test size(model.m2(z)) == (ldim+1, N)
    	@test size(model.m2.encoder(z)) == (ldim*2,N)
+  # encoding
+  @test size(GenerativeModels.encode(model, x)) == (ldim,N)
+  @test size(GenerativeModels.encode(model, x, 3)) == (ldim,N)
 
 	model = GenerativeModels.TSVAE(xdim, ldim, (3,2))
    	_x = model(x)
@@ -94,5 +97,8 @@ N = 100
     @test ls[1] > ls[end]
   end
   @test all(paramchange(frozen_params, model)) 
+  # encoding
+  @test size(GenerativeModels.encode(model, X)) == (latentdim,k)
+  @test size(GenerativeModels.encode(model, X,3)) == (latentdim,k)
   
 end

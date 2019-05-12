@@ -64,7 +64,11 @@ N = 10
 	@test size(model.encoder(x)) == (ldim, N)
 	@test size(model(x)) == (xdim, N)
 	@test size(model.encoder.layers[1].W,1) == 10
-	@test size(model.encoder.layers[end].W,2) == 10
+	@test size(model.encoder.layers[end].W,2) == 10	
+
+	# encoding
+	@test size(GenerativeModels.encode(model, x)) == (ldim,N)
+	@test size(GenerativeModels.encode(model, x, 3)) == (ldim,N)
 
 	# convolutional AE
 	data = randn(Float32,32,16,1,8);
@@ -87,4 +91,7 @@ N = 10
 	@test all(paramchange(frozen_params, model))	
 	(i,ls) = get(hist,:loss)
 	@test ls[end] < ls[1]
+	# encoding
+	@test size(GenerativeModels.encode(model, data)) == (latentdim,k)
+	@test size(GenerativeModels.encode(model, data,3)) == (latentdim,k)
 end

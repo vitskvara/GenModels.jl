@@ -191,6 +191,26 @@ Maximum mean discrepancy for samples X and Y given kernel k and parameter σ.
 """
 MMD(k,X,Y,σ) = ekxy(k,X,X,σ) - 2*ekxy(k,X,Y,σ) + ekxy(k,Y,Y,σ)
 
+"""
+    encode(GenerativeModel, X[, batchsize])
+
+Returns the latent space representation of X. If batchsize is specified,
+it X will be processed in batches (sometimes necessary due to memory constraints).
+"""
+encode(model::GenerativeModel, X) = model.encoder(X)
+function encode(model::GenerativeModel, X, batchsize::Int)
+    Z=[]
+    Ndim = ndims(X)
+    N = size(X,Ndim)
+    for i in 1:ceil(Int,N/batchsize)
+        inds = Array{Any,1}(fill(Colon(), Ndim-1))
+        push!(inds, 1+(i-1)*batchsize:min(i*batchsize, N))
+        push!(Z, encode(model, X[inds...]))
+    end
+    return cat(Z..., dims=ndims(Z[1]))
+end
+
+
 # other auxiliary functions
 """
    scalar2tuple(x)
