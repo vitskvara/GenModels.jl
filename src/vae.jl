@@ -153,6 +153,15 @@ function loglikelihood(vae::VAE, X)
 	elseif vae.variant == :scalar
 		vx = vae(X)
 		μ, σ2 = mu_scalarvar(vx), sigma2_scalarvar(vx)
+		bound = Float(1e20)
+		σ2 = min.(σ2,Float(1e10))
+		if any(isnan.(μ))
+			println("mu has nans")
+		end
+		if any(isnan.(σ2))
+			println("sigma has nans")
+		end
+		
 		return loglikelihoodopt(X,μ,σ2)
 	elseif vae.variant == :diag
 		vx = vae(X)
@@ -318,6 +327,7 @@ function fit!(vae::VAE, X, batchsize::Int, nepochs::Int;
 		x->loss(vae,x,L,beta),
 		opt,
 		_cb;
+		clip_grad = true,
 		trainkwargs...
 		)
 

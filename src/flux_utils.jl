@@ -151,6 +151,27 @@ Abstract type to share some methods between models.
 """
 abstract type GenerativeModel end
 
+function grad_clip!(grad, bound)
+    #println("clipping gradient")
+    grad .= min.(grad, bound) 
+    grad .= max.(grad, -bound)
+    #if any(isnan.(grad))
+    #    println("removing nan from gradient")
+    #    grad[isnan.(grad)] .= bound
+    #end
+end
+function grad_clip!(model::GenerativeModel, bound)
+    for p in params(model)
+        grad_clip!(p.grad, bound)
+    end
+end
+
+function clip_nans!(grad, bound)
+    if any(isnan.(grad))
+        println("gradient contains nans")
+    end
+end
+
 """
     update(model, optimiser)
 
@@ -159,6 +180,8 @@ Update model parameters using optimiser.
 function update!(model, optimiser)
     for p in params(model)
         Δ = Flux.Optimise.apply!(optimiser, p.data, p.grad)
+        #b = Float(1e4)
+        #clip_nans!(Δ,b)
         p.data .-= Δ
         p.grad .= 0
     end
@@ -191,11 +214,16 @@ of the remaining arguments that gets called every iteration -
 use it to store or print training progress, stop training etc. 
 """
 function train!(model, data, loss, optimiser, callback; 
-    usegpu = false, memoryefficient = false)
+    usegpu = false, memoryefficient = false, clip_grad = false)
     for _data in data
         try
             if usegpu
              _data = _data |> gpu
+            end
+            # apply gradient clipping if needed
+            if clip_grad
+                bound = Float(1e4)
+                grad_clip!(model, bound)
             end
             loss_back_update!(model, _data, loss, optimiser)
             # now call the callback function

@@ -278,7 +278,7 @@ end
 
 """
 	fit!(WAAE, X, batchsize, nepochs; 
-		[σ, λ, cbit, history, verb, η, runtype, usegpu, memoryefficient])
+		[σ, λ, γ, cbit, history, verb, η, runtype, usegpu, memoryefficient])
 
 Trains the WAAE neural net.
 
