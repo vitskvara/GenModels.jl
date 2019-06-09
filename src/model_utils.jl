@@ -198,18 +198,24 @@ Returns the latent space representation of X. If batchsize is specified,
 it X will be processed in batches (sometimes necessary due to memory constraints).
 """
 encode(model::GenerativeModel, X) = model.encoder(X)
-function encode(model::GenerativeModel, X, batchsize::Int)
+encode_untracked(model::GenerativeModel, X) = Flux.Tracker.data(model.encoder(X))
+# general function for both tracked and untracked encoding via limited batchsize
+# see that the tracked encoding allocates huge amount of memory for large inputs and conv networks
+# made general so that it works both for 2D and 4D inputs
+function _encode(model::GenerativeModel, X, batchsize::Int,enc_fun)
     Z=[]
     Ndim = ndims(X)
     N = size(X,Ndim)
     for i in 1:ceil(Int,N/batchsize)
         inds = Array{Any,1}(fill(Colon(), Ndim-1))
         push!(inds, 1+(i-1)*batchsize:min(i*batchsize, N))
-        push!(Z, encode(model, X[inds...]))
+        push!(Z, enc_fun(model, X[inds...]))
     end
     return cat(Z..., dims=ndims(Z[1]))
 end
-
+encode(model::GenerativeModel, X, batchsize::Int) = _encode(model, X, batchsize, encode) 
+encode_untracked(model::GenerativeModel, X, batchsize::Int) = _encode(model, X, batchsize, encode_untracked) 
+    
 
 # other auxiliary functions
 """

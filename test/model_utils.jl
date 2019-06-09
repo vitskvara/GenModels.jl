@@ -2,6 +2,7 @@ using GenerativeModels
 using Test
 using Random
 using StatsBase
+using Flux
 include(joinpath(dirname(pathof(GenerativeModels)), "../test/test_utils.jl"))
 
 Random.seed!(12345)
@@ -55,6 +56,22 @@ Random.seed!(12345)
 	# the version where sigma is a vector (scalar variance)
     @test sim(GenerativeModels.loglikelihoodopt(fill(0.0,5,5),fill(0.0,5,5),fill(1.0,5)), 0.0)
 	@test sim(GenerativeModels.loglikelihoodopt(fill(5,5,5),fill(5,5,5),fill(1,5)), 0.0)
+
+	# GAN tests
+
+	# MMD tests
+
+	# encoding
+	xdim = 5
+	ldim = 1
+	N = 10
+	x = randn(GenerativeModels.Float,xdim,N)
+	model = GenerativeModels.AE([xdim,2,ldim], [ldim,2,xdim])
+	@test typeof(GenerativeModels.encode(model,x)) <: TrackedArray
+	@test !(typeof(GenerativeModels.encode_untracked(model,x)) <: TrackedArray)
+	@test typeof(GenerativeModels.encode(model,x,2)) <: TrackedArray
+	@test !(typeof(GenerativeModels.encode_untracked(model,x,3)) <: TrackedArray)
+
 
 	# mu&sigma
 	X = randn(4,10)
