@@ -346,6 +346,7 @@ end
 Latent (sampled) representation of X given VAE.
 """
 encode(model::VAE, X) = model.sampler(model.encoder(X))
+encode_untracked(model::VAE, X) = Flux.Tracker.data(model.sampler(model.encoder(X)))
 
 """
 	isconvvae(model)

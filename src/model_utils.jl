@@ -202,7 +202,7 @@ encode_untracked(model::GenerativeModel, X) = Flux.Tracker.data(model.encoder(X)
 # general function for both tracked and untracked encoding via limited batchsize
 # see that the tracked encoding allocates huge amount of memory for large inputs and conv networks
 # made general so that it works both for 2D and 4D inputs
-function _encode(model::GenerativeModel, X, batchsize::Int,enc_fun)
+function encode_in_batch(model::GenerativeModel, X, batchsize::Int,enc_fun)
     Z=[]
     Ndim = ndims(X)
     N = size(X,Ndim)
@@ -213,8 +213,8 @@ function _encode(model::GenerativeModel, X, batchsize::Int,enc_fun)
     end
     return cat(Z..., dims=ndims(Z[1]))
 end
-encode(model::GenerativeModel, X, batchsize::Int) = _encode(model, X, batchsize, encode) 
-encode_untracked(model::GenerativeModel, X, batchsize::Int) = _encode(model, X, batchsize, encode_untracked) 
+encode(model::GenerativeModel, X, batchsize::Int) = encode_in_batch(model, X, batchsize, encode) 
+encode_untracked(model::GenerativeModel, X, batchsize::Int) = encode_in_batch(model, X, batchsize, encode_untracked) 
     
 
 # other auxiliary functions
