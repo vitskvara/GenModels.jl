@@ -51,7 +51,7 @@ end
 	WAE(xdim, zdim, nlayers[, pz]; [kernel, hdim, activation, layer])
 
 Initialize a variational autoencoder given input and latent dimension 
-and numberof layers. The width of layers is linearly interpolated 
+and number of layers. The width of layers is linearly interpolated 
 between xdim and zdim.
 
 	xdim = input size

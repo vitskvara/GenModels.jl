@@ -94,7 +94,7 @@ end
 
 """
 	ConvVAE(insize, zdim, nconv, kernelsize, channels, scaling; 
-		[hdim, variant, ndense, dsizes, activation, stride, batchnorm])
+		[variant, ndense, dsizes, activation, stride, batchnorm])
 
 Initializes a convolutional autoencoder.
 
@@ -106,7 +106,6 @@ Initializes a convolutional autoencoder.
 	channels = a tuple/vector of number of channels
 	scaling = Int or a tuple/vector of ints
 	pz = sampling distribution that can be called as pz(dim,nsamples)
-	hdim = widht of layers in the discriminator
 	variant = one of [:unit, :scalar, :diag]
 	ndense = number of dense layers
 	dsizes = vector of dense layer widths
@@ -261,10 +260,8 @@ function (cb::basic_callback)(m::VAE, d, l, opt, L::Int, beta::Real)
 end
 
 """
-	fit!(vae::VAE, X, batchsize::Int, nepochs::Int; 
-		L=1, beta::Real= Float(1.0), cbit::Int=200, history = nothing, 
-		verb::Bool = true, η = 0.001, runtype = "experimental", 
-		[usegpu, memoryefficient])
+	opt = fit!(VAE, X, batchsize, nepochs[; L, beta, cbit, history, 
+		opt, verb, η, runtype, usegpu, memoryefficient, prealloc_eps])
 
 Trains the VAE neural net.
 
@@ -275,13 +272,15 @@ Trains the VAE neural net.
 	L [1] - number of samples for likelihood
 	beta [1.0] - scaling for the KLD loss
 	cbit [200] - after this # of iterations, progress is updated
-	history [nothing] - a dictionary for training progress control
+	history [nothing] - a dictionary for training progress control from ValueHistories
+	opt [ADAM] - optimizer
 	verb [true] - if output should be produced
 	η [0.001] - learning rate
 	runtype ["experimental"] - if fast is selected, no output and no history is written
-	usegpu - if X is not already on gpu, this will put the inidvidual batches into gpu memory rather 
+	usegpu [false] - if X is not already on gpu, this will put the inidvidual batches into gpu memory rather 
 			than all data at once
-	memoryefficient - calls gc after every batch, again saving some memory but prolonging computation
+	memoryefficient [false] - calls gc after every batch, again saving some memory but prolonging computation
+	prealloc_eps [false] - preallocates the random samples
 """
 function fit!(vae::VAE, X, batchsize::Int, nepochs::Int; 
 	L=1, beta::Real= Float(1.0), cbit::Int=200, history = nothing, opt=nothing,
