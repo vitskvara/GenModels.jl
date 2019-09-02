@@ -1,4 +1,4 @@
-name = "GenerativeModels"
+name = "GenModels"
 uuid = "316c64c6-6a49-11e9-07fe-e73d6c9df589"
 authors = ["Vít Škvára <vit.skvara@gmail.com>"]
 version = "0.1.0"

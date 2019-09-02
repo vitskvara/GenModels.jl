@@ -1,4 +1,4 @@
-module GenerativeModels
+module GenModels
 
 using Flux
 using ValueHistories

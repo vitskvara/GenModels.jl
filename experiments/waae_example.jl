@@ -1,6 +1,6 @@
 using Flux
 using PyPlot
-using GenerativeModels
+using GenModels
 using StatsBase
 using Random
 using ValueHistories
@@ -32,11 +32,11 @@ nlayers = 3
 σ = 0.4
 λ = 1.0
 γ = 10.0
-kernel = GenerativeModels.imq
+kernel = GenModels.imq
 nonlinearity = Flux.relu
-model = GenerativeModels.WAAE(M, ldim, nlayers, nlayers, binormal, kernel = kernel, hdim = hdim, activation=nonlinearity)
+model = GenModels.WAAE(M, ldim, nlayers, nlayers, binormal, kernel = kernel, hdim = hdim, activation=nonlinearity)
 hist = MVHistory()
-GenerativeModels.fit!(model, X, 50, 2000, σ=σ, λ=λ, γ=γ, history=hist,verb=true)
+GenModels.fit!(model, X, 50, 2000, σ=σ, λ=λ, γ=γ, history=hist,verb=true)
 
 rX = model(X).data
 figure(figsize=(10,5))
@@ -69,9 +69,9 @@ X = s*randn(Float32,M,N)
 ldim = 2
 hdim = 50
 nonlinearity = Flux.relu
-model = GenerativeModels.WAAE(M, ldim, nlayers, nlayers, binormal, kernel = kernel, hdim = hdim, activation=nonlinearity)
+model = GenModels.WAAE(M, ldim, nlayers, nlayers, binormal, kernel = kernel, hdim = hdim, activation=nonlinearity)
 hist = MVHistory()
-GenerativeModels.fit!(model, X, 50, 5000, σ=σ, λ=λ, γ=γ, history=hist,verb=true)
+GenModels.fit!(model, X, 50, 5000, σ=σ, λ=λ, γ=γ, history=hist,verb=true)
 
 rX = model(X).data
 figure(figsize=(10,5))

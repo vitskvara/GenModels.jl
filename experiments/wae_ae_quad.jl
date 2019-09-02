@@ -1,6 +1,6 @@
 using Flux
 using PyPlot
-using GenerativeModels
+using GenModels
 using StatsBase
 using Random
 using ValueHistories
@@ -48,7 +48,7 @@ nlayers = 3
 nonlinearity = Flux.relu
 pz = binormal
 if model == "WAE"
-	kernel = GenerativeModels.imq
+	kernel = GenModels.imq
 	model = WAE(M, ldim, nlayers, pz, kernel = kernel, hdim = hdim, activation=nonlinearity)
 elseif modelname == "AAE"
 	model = AAE(M, ldim, nlayers, nlayers, pz, hdim = hdim, activation=nonlinearity)
@@ -57,9 +57,9 @@ hist = MVHistory()
 if modelname == "WAE"
 	σ = 0.001
 	λ = 1.0
-	GenerativeModels.fit!(model, X, 50, 2000, σ=σ, λ=λ, history=hist,verb=true);
+	GenModels.fit!(model, X, 50, 2000, σ=σ, λ=λ, history=hist,verb=true);
 else
-	GenerativeModels.fit!(model, X, 50, 2000, history=hist,verb=true);
+	GenModels.fit!(model, X, 50, 2000, history=hist,verb=true);
 end
 
 rX = model(X).data

@@ -1,9 +1,9 @@
-using GenerativeModels
+using GenModels
 using Test
 using Random
 using Pkg
 
-@testset "GenerativeModels" begin
+@testset "GenModels" begin
 
 @testset "utilities" begin
 	@info "Testing utilities"

@@ -50,8 +50,8 @@ generated from the show string of the model. Additional arguments are saved as w
             :hdim => 10
         )
     modelname = "AE"
-    model = GenerativeModels.construct_model(modelname, args...; kwargs...)
-    GenerativeModels.save_model("model.bson", model, modelname=modelname, model_args=args,
+    model = GenModels.construct_model(modelname, args...; kwargs...)
+    GenModels.save_model("model.bson", model, modelname=modelname, model_args=args,
         model_kwargs=kwargs)
 """
 function save_model(file, model; modelname=nothing, kwargs...) 

@@ -1,6 +1,6 @@
 using Flux
 using PyPlot
-using GenerativeModels
+using GenModels
 using StatsBase
 using Random
 using ValueHistories
@@ -31,7 +31,7 @@ hdim = 50
 nonlinearity = Flux.relu
 model = AAE(M, ldim, 3, 3, binormal, hdim = hdim, activation=nonlinearity)
 hist = MVHistory()
-GenerativeModels.fit!(model, X, 50, 2000, history=hist,verb=true)
+GenModels.fit!(model, X, 50, 2000, history=hist,verb=true)
 
 rX = model(X).data
 figure(figsize=(10,5))
@@ -64,7 +64,7 @@ hdim = 50
 nonlinearity = Flux.relu
 model = AAE(M, ldim, 3, 3, binormal, hdim = hdim, activation=nonlinearity)
 hist = MVHistory()
-GenerativeModels.fit!(model, X, 50, 5000, history=hist,verb=true);
+GenModels.fit!(model, X, 50, 5000, history=hist,verb=true);
 
 rX = model(X).data
 figure(figsize=(10,5))

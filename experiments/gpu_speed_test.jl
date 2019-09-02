@@ -77,9 +77,9 @@ julia> @time update!(model, opt)
   0.000984 seconds (1.51 k allocations: 79.891 KiB)
 
 # using ConvAE
-using GenerativeModels
+using GenModels
 
-model=GenerativeModels.ConvAE((64,64,1), 2, 2, 3, (16,1),1) |> gpu
+model=GenModels.ConvAE((64,64,1), 2, 2, 3, (16,1),1) |> gpu
 
 opt = ADAM()
 @time l = Flux.mse(model(X),X)
@@ -112,7 +112,7 @@ julia> @time update!(model, opt)
   0.002965 seconds (5.93 k allocations: 303.016 KiB)
 
 # larger model
-model=GenerativeModels.ConvAE((64,64,1), 2, 3, 3, (8,16,32),2) |> gpu
+model=GenModels.ConvAE((64,64,1), 2, 3, 3, (8,16,32),2) |> gpu
 
 opt = ADAM()
 @time l = Flux.mse(model(X),X)
@@ -146,7 +146,7 @@ julia> @time update!(model, opt)
 
 # larger data
 X = randn(Float32, 128, 128, 1, 64) |> gpu;
-model=GenerativeModels.ConvAE((128,128,1), 2, 3, 3, (8,16,32),2) |> gpu;
+model=GenModels.ConvAE((128,128,1), 2, 3, 3, (8,16,32),2) |> gpu;
 
 opt = ADAM()
 @time l = Flux.mse(model(X),X)
