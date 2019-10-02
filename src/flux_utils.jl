@@ -302,6 +302,19 @@ Flux.@treelike ResBlock
 ### functions for convolutional networks upscaling ###
 ######################################################
 """
+    upscale_2D(x, scale)
+
+Upscales a 4D tensor `x` n-times in row direction and m-times in column direction by scale=(n,m).
+"""
+function upscale_2D(x::AbstractArray{T,4}, scale::Tuple{Int,Int}) where T
+    (h, w, c, n) = size(x)
+    y = similar(x, (1, scale[1], 1, scale[2], 1, 1))
+    fill!(y, 1)
+    z = reshape(x, (h, 1, w, 1, c, n))  .* y
+    reshape(permutedims(z, (2,1,4,3,5,6)), (h*scale[1], w*scale[2], c, n)) 
+end
+
+"""
     oneszeros([T],segment,length,i)
 
 Create a vector of type T of size `length*segment` where `i`th

@@ -146,6 +146,17 @@ N = 10
 	@test loss(X) < l
 
 	# upscaling stuff
+	# upscale2D
+	a = Tracker.collect(Flux.Tracker.TrackedReal.(Float32.([1.0 2.0; 3.0 4.0])))
+	a = reshape(a,2,2,1,1)
+	# 2D
+	X = GenModels.upscale_2D(a,(3,2))
+	@test size(X) == (6,4,1,1)
+	@test typeof(X) <: Flux.TrackedArray
+	@test X.data[3,1,1,1] == 1.0
+	@test X.data[4,1,1,1] == 3.0
+	@test X.data[3,4,1,1] == 2.0
+	@test X.data[4,4,1,1] == 4.0
 	# oneszeros
 	x = GenModels.oneszeros(2,3,2)
 	@test x == [0.0; 0.0; 1.0; 1.0; 0.0; 0.0]
