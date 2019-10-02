@@ -416,6 +416,25 @@ N = 10
 	layer = GenModels.upscaleconv(3,4=>2,2;resblock=true)
 	@test size(layer(X)) == (4,8,2,10)
 
+	# upscaleconv
+	X = randn(2,4,4,10)
+	layer = GenModels.upscaleconv(3,4=>2,2,efficient=false)
+	@test length(layer.layers) == 2
+	@test size(layer(X)) == (4,8,2,10)
+	layer = GenModels.upscaleconv(5,4=>1,(4,3),efficient=false)
+	@test size(layer(X)) == (8,12,1,10)
+	layer = GenModels.upscaleconv(3,4=>2,2;stride=2,efficient=false)
+	@test size(layer(X)) == (2,4,2,10)
+	layer = GenModels.upscaleconv(3,4=>2,2,batchnorm=true,efficient=false)
+	@test length(layer.layers) == 3
+	@test size(layer(X)) == (4,8,2,10)
+	layer = GenModels.upscaleconv(5,4=>1,(4,3),batchnorm=true,efficient=false)
+	@test size(layer(X)) == (8,12,1,10)
+	layer = GenModels.upscaleconv(3,4=>2,2;stride=2,batchnorm=true,efficient=false)
+	@test size(layer(X)) == (2,4,2,10)
+	layer = GenModels.upscaleconv(3,4=>2,2;resblock=true,efficient=false)
+	@test size(layer(X)) == (4,8,2,10)
+
 	# convtransposeconv
 	X = randn(2,4,4,10)
 	layer = GenModels.convtransposeconv(3,4=>2,2)

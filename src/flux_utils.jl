@@ -603,16 +603,18 @@ This will upscale the input in x and y two times and then apply
 a kernel of size 5 to reduce the number of channels from 4 to 2.
 """
 function upscaleconv(ks::Int, channels::Pair, scales::Union{Tuple,Int};
-    activation = relu, stride::Int=1, batchnorm = false, resblock=false)
+    activation = relu, stride::Int=1, batchnorm = false, resblock=false, 
+    efficient=true)
     if !(typeof(scales) <: Tuple)   
         scales = (scales,scales)
     end
     layer = resblock ? ResBlock : SameConv
+    ups = efficient ? upscale_2D : upscale
     return batchnorm ?
         Flux.Chain(BatchNorm(channels[1]),
-                x -> upscale(x,scales),
+                x -> ups(x,scales),
                 layer((ks,ks), channels, activation; stride = (stride,stride))) :
-        Flux.Chain(x -> upscale(x,scales),
+        Flux.Chain(x -> ups(x,scales),
                 layer((ks,ks), channels, activation; stride = (stride,stride)))
 end
 
