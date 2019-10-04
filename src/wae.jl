@@ -79,7 +79,7 @@ end
 
 """
 	ConvWAE(insize, zdim, nconv, kernelsize, channels, scaling[, pz]; 
-		[kernel, ndense, dsizes, activation, stride, batchnorm, outbatchnorm])
+		[kernel, ndense, dsizes, activation, stride, batchnorm, outbatchnorm, upscale_type])
 
 Initialize a convolutional wasserstein autoencoder. 
 	
@@ -97,14 +97,15 @@ Initialize a convolutional wasserstein autoencoder.
 	stride = Int or vecotr/tuple of ints
 	batchnorm = use batchnorm in convolutional layers
 	outbatchnorm = use batchnorm on the outpu of encoder
+	upscale_type = one of ["transpose", "upscale"]
 """
 function ConvWAE(insize, zdim, nconv, kernelsize, channels, scaling, pz=randn; 
-	kernel = rbf, outbatchnorm=false, kwargs...)
+	kernel = rbf, outbatchnorm=false, upscale_type = "transpose", kwargs...)
 	# first build the convolutional encoder and decoder
 	encoder = convencoder(insize, zdim, nconv, kernelsize, 
 		channels, scaling; outbatchnorm=outbatchnorm, kwargs...)
 	decoder = convdecoder(insize, zdim, nconv, kernelsize, 
-		reverse(channels), scaling; kwargs...)
+		reverse(channels), scaling; layertype = upscale_type, kwargs...)
 
 	return WAE(encoder, decoder, n->pz(Float,zdim,n), kernel)
 end

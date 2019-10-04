@@ -77,7 +77,7 @@ end
 
 """
 	ConvAE(insize, zdim, nconv, kernelsize, channels, scaling; 
-		[ndense, dsizes, activation, stride, batchnorm, outbatchnorm])
+		[ndense, dsizes, activation, stride, batchnorm, outbatchnorm, upscale_type])
 
 Initializes a convolutional autoencoder.
 
@@ -93,13 +93,14 @@ Initializes a convolutional autoencoder.
 	stride = Int or vecotr/tuple of ints
 	batchnorm = use batchnorm in convolutional layers
 	outbatchnorm = use batchnorm on the outpu of encoder
+	upscale_type = one of ["transpose", "upscale"]
 """
 function ConvAE(insize, zdim, nconv, kernelsize, channels, scaling; 
-	outbatchnorm=false, kwargs...)
+	outbatchnorm=false, upscale_type = "transpose", kwargs...)
 	encoder = convencoder(insize, zdim, nconv, kernelsize, 
 		channels, scaling; outbatchnorm=outbatchnorm, kwargs...)
 	decoder = convdecoder(insize, zdim, nconv, kernelsize, 
-		reverse(channels), scaling; kwargs...)
+		reverse(channels), scaling; layertype = upscale_type, kwargs...)
 	return AE(encoder, decoder)
 end
 

@@ -98,7 +98,7 @@ end
 
 """
 	ConvAAE(insize, zdim, disc_nlayers, nconv, kernelsize, channels, scaling[, pz]; 
-		[hdim, ndense, dsizes, activation, stride, batchnorm, outbatchnorm])
+		[hdim, ndense, dsizes, activation, stride, batchnorm, outbatchnorm, upscale_type])
 
 Initialize a convolutional adversarial autoencoder. 
 	
@@ -117,15 +117,16 @@ Initialize a convolutional adversarial autoencoder.
 	stride = Int or vecotr/tuple of ints
 	batchnorm = use batchnorm in convolutional layers
 	outbatchnorm = use batchnorm on the outpu of encoder
+	upscale_type = one of ["transpose", "upscale"]
 """
 function ConvAAE(insize, zdim, disc_nlayers, nconv, kernelsize, channels, scaling, pz=randn; 
-	outbatchnorm=false, hdim=nothing, activation=Flux.relu, layer=Flux.Dense,
+	outbatchnorm=false, hdim=nothing, activation=Flux.relu, layer=Flux.Dense, upscale_type = "transpose",
 	kwargs...)
 	# first build the convolutional encoder and decoder
 	encoder = convencoder(insize, zdim, nconv, kernelsize, 
 		channels, scaling; outbatchnorm=outbatchnorm, activation = activation, kwargs...)
 	decoder = convdecoder(insize, zdim, nconv, kernelsize, 
-		reverse(channels), scaling; activation = activation, kwargs...)
+		reverse(channels), scaling; layertype = upscale_type, activation = activation, kwargs...)
 	# then a classical discriminator
 	if hdim == nothing
 		dissize = ceil.(Int, range(zdim, 1, length=disc_nlayers+1))

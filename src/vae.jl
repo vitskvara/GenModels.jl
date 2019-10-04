@@ -94,7 +94,7 @@ end
 
 """
 	ConvVAE(insize, zdim, nconv, kernelsize, channels, scaling; 
-		[variant, ndense, dsizes, activation, stride, batchnorm])
+		[variant, ndense, dsizes, activation, stride, batchnorm, upscale_type])
 
 Initializes a convolutional autoencoder.
 
@@ -112,9 +112,10 @@ Initializes a convolutional autoencoder.
 	activation = type of nonlinearity
 	stride = Int or vecotr/tuple of ints
 	batchnorm = use batchnorm in convolutional layers
+	upscale_type = one of ["transpose", "upscale"]
 """
 function ConvVAE(insize, zdim, nconv, kernelsize, channels, scaling; variant=:unit, 
-	outbatchnorm = false, kwargs...)
+	outbatchnorm = false, upscale_type = "transpose", kwargs...)
 	encoder = convencoder(insize, zdim*2, nconv, kernelsize, 
 		channels, scaling; outbatchnorm=outbatchnorm, kwargs...)
 	if variant in [:diag, :scalar]
@@ -122,7 +123,7 @@ function ConvVAE(insize, zdim, nconv, kernelsize, channels, scaling; variant=:un
 		insize[end] = 2*insize[end]
 	end
 	decoder = convdecoder(insize, zdim, nconv, kernelsize, 
-		reverse(channels), scaling; kwargs...)
+		reverse(channels), scaling; layertype = upscale_type, kwargs...)
 	return VAE(encoder, samplenormal, decoder, variant)
 end
 
