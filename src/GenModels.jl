@@ -21,9 +21,11 @@ include("tsvae.jl")
 include("aae.jl")
 include("wae.jl")
 include("waae.jl")
+include("vamp.jl")
 
 export AE, AAE, VAE, TSVAE, WAE, WAAE
 export ConvAE, ConvAAE, ConvVAE, ConvTSVAE, ConvWAE, ConvWAAE
 export fit!
+export VAMP
 
 end # module

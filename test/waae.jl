@@ -9,7 +9,7 @@ xdim = 5
 ldim = 1
 N = 10
 
-@testset "WAE" begin
+@testset "WAAE" begin
 	println("           wasserstein-adversarial autoencoder")
 
 	x = GenModels.Float.(hcat(ones(xdim, Int(N/2)), zeros(xdim, Int(N/2))))

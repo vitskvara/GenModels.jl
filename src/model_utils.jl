@@ -216,7 +216,6 @@ end
 encode(model::GenerativeModel, X, batchsize::Int) = encode_in_batch(model, X, batchsize, encode) 
 encode_untracked(model::GenerativeModel, X, batchsize::Int) = encode_in_batch(model, X, batchsize, encode_untracked) 
     
-
 # other auxiliary functions
 """
    scalar2tuple(x)

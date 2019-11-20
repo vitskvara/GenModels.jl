@@ -292,3 +292,38 @@ end
 	# were the layers realy trained?
 	@test all(paramchange(frozen_params, model)) 
 end
+
+@testset "VAMP - GPU" begin
+	# now test it with a waae net 
+	K = 4
+	data = randn(Float32,4,2,1,8) |> gpu;
+	m,n,c,k = size(data)
+	# now setup the convolutional net
+	insize = (m,n,c)
+	latentdim = 2
+	nconv = 2
+	kernelsize = 3
+	channels = (2,4)
+	scaling = [(2,2),(1,1)]
+	disc_nlayers = 2
+	pz = VAMP(K, insize) |> gpu
+	model = GenModels.ConvWAAE(insize, latentdim, disc_nlayers, nconv, kernelsize, 
+		channels, scaling, pz; kernel = GenModels.imq) |> gpu
+	model.pz(N::Int) = GenModels.encodeSampleVamp(model.pz, model.encoder, N)
+	frozen_params_pz = getparams(model.pz)
+	frozen_params = getparams(model)
+
+	z = model.pz(10)
+	@test size(z) == (latentdim, 10)
+	@test typeof(z) <: TrackedArray{GenModels.Float,2}    
+	@test typeof(z.data) == CuArray{GenModels.Float, 2}
+	z = GenModels.sampleVamp(model.pz,10,2)
+	@test size(z) == (m,n,c, 10)
+	@test typeof(z) <: TrackedArray{GenModels.Float,4}    
+	@test typeof(z.data) == CuArray{GenModels.Float, 4}
+	# test training
+	hist = MVHistory()
+	GenModels.fit!(model, data, 4, 10, cbit=1, history=hist, verb=false)
+	@test all(paramchange(frozen_params, model))	
+	@test all(paramchange(frozen_params_pz, model.pz))	
+end

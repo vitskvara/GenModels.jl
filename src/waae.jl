@@ -1,3 +1,5 @@
+import Flux.params
+
 """
 	WAAE{encoder, decoder, discriminator, pz, kernel}
 
@@ -12,6 +14,7 @@ mutable struct WAAE{E, FE, DE, DS, FDS, PZ, K} <: GenerativeModel
 	pz::PZ
 	kernel::K
 end
+
 """
 	WAAE(e, de, ds, pz, k)
 
@@ -34,13 +37,13 @@ Initialize a wasserstein adversarial autoencoder.
 	esize = vector of ints specifying the width anf number of layers of the encoder
 	decsize = size of decoder
 	dissize = size of discriminator
-	pz = sampling distribution that can be called as pz(T,dim,nsamples)
+	pz = sampling distribution that can be called as pz(nsamples)
 	kernel = default rbf kernel
 	activation [Flux.relu] = arbitrary activation function
 	layer [Flux.Dense] = layer type
 """
 function WAAE(esize::Array{Int64,1}, decsize::Array{Int64,1}, dissize::Array{Int64,1}, 
-	pz = randn; kernel=rbf, activation = Flux.relu,	layer = Flux.Dense)
+	pz = n -> randn(Float,esize[end],n); kernel=rbf, activation = Flux.relu,	layer = Flux.Dense)
 	@assert size(esize, 1) >= 3
 	@assert size(decsize, 1) >= 3
 	@assert size(dissize, 1) >= 3
@@ -59,7 +62,7 @@ function WAAE(esize::Array{Int64,1}, decsize::Array{Int64,1}, dissize::Array{Int
 	discriminator = discriminatorbuilder(dissize, activation, layer)
 
 	# finally construct the ae struct
-	waae = WAAE(encoder, decoder, discriminator, n->pz(Float,esize[end],n), kernel)
+	waae = WAAE(encoder, decoder, discriminator, pz, kernel)
 
 	return waae
 end
@@ -74,14 +77,15 @@ and number of layers.
 	zdim = code size
 	ae_nlayers = number of layers of the autoencoder
 	disc_nlayers = number of layers of the discriminator
-	pz = sampling distribution that can be called as pz(T,dim,nsamples)
+	pz = sampling distribution that can be called as pz(nsamples)
 	kernel = default rbf kernel
 	hdim = width of layers, if not specified, it is linearly interpolated
 	activation [Flux.relu] = arbitrary activation function
 	layer [Flux.Dense] = layer type
 """
 function WAAE(xdim::Int, zdim::Int, ae_nlayers::Int, disc_nlayers::Int, 
-	pz = randn; kernel=rbf, hdim = nothing, activation = Flux.relu, layer = Flux.Dense)
+	pz = n -> randn(Float,zdim,n); kernel=rbf, hdim = nothing, 
+	activation = Flux.relu, layer = Flux.Dense)
 	@assert ae_nlayers >= 2
 	@assert disc_nlayers >= 2
 
@@ -112,7 +116,7 @@ Initialize a convolutional adversarial autoencoder.
 	kernelsize = Int or a tuple/vector of ints
 	channels = a tuple/vector of number of channels
 	scaling = Int or a tuple/vector of ints
-	pz = sampling distribution that can be called as pz(T,dim,nsamples)
+	pz = sampling distribution that can be called as pz(nsamples)
 	kernel = default rbf kernel
 	hdim = widht of layers in the discriminator
 	ndense = number of dense layers
@@ -123,7 +127,8 @@ Initialize a convolutional adversarial autoencoder.
 	outbatchnorm = use batchnorm on the outpu of encoder
 	upscale_type = one of ["transpose", "upscale"]
 """
-function ConvWAAE(insize, zdim, disc_nlayers, nconv, kernelsize, channels, scaling, pz=randn; 
+function ConvWAAE(insize, zdim, disc_nlayers, nconv, kernelsize, channels, scaling, 
+	pz = n -> randn(Float,zdim,n); 
 	outbatchnorm=false, hdim=nothing, activation=Flux.relu, layer=Flux.Dense, upscale_type = "transpose",
 	kernel=rbf, kwargs...)
 	# first build the convolutional encoder and decoder
@@ -138,7 +143,7 @@ function ConvWAAE(insize, zdim, disc_nlayers, nconv, kernelsize, channels, scali
 		dissize = vcat([zdim], fill(hdim, disc_nlayers-1), [1])
 	end
 	discriminator = discriminatorbuilder(dissize, activation, layer)
-	return WAAE(encoder, decoder, discriminator, n->pz(Float,zdim,n), kernel)
+	return WAAE(encoder, decoder, discriminator, pz, kernel)
 end
 
 ################
@@ -181,7 +186,7 @@ MMD(waae::WAAE, X::AbstractArray, σ) = MMD(waae.kernel, waae.encoder(X), waae.p
 """
 	loss(WAAE,X)
 
-Autoencoder loss (MSE).
+WAAE loss.
 """
 loss(waae::WAAE, X::AbstractArray, Z::AbstractArray, σ, λ::Real, γ::Real) = aeloss(waae, X) + Float(λ)*MMD(waae, X, Z, σ) + Float(γ)*gloss(waae,X) + Float(γ)*dloss(waae,X)
 loss(waae::WAAE, X::AbstractArray, σ, λ::Real, γ::Real) = aeloss(waae, X) + Float(λ)*MMD(waae, X, σ) + Float(γ)*gloss(waae,X) + Float(γ)*dloss(waae,X)
