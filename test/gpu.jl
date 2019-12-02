@@ -41,7 +41,8 @@ end
 	frozen_params = getparams(model)
 	@test !all(paramchange(frozen_params, model))
 
-	@test typeof(gx) == CuArray{GenModels.Float,2}
+	@test typeof(gx) == CuArray{GenModels.Float,2, Nothing}
+	@test typeof(_x.data) == CuArray{GenModels.Float,2, Nothing}
 	@test typeof(_x) <: TrackedArray{GenModels.Float,2}    
 	hist = MVHistory()
 	GenModels.fit!(model, x, 5, 1000, cbit=100, history = hist, verb=false,
@@ -63,7 +64,8 @@ end
 	# for training check
 	frozen_params = getparams(model)
 	@test !all(paramchange(frozen_params, model)) 
-	@test typeof(gx) == CuArray{GenModels.Float,2}
+
+	@test typeof(_x.data) == CuArray{GenModels.Float,2, Nothing}
 	@test typeof(_x) <: TrackedArray{GenModels.Float,2}    
 	hist = MVHistory()
 	GenModels.fit!(model, x, 10, 50, beta =0.1, cbit=5, history = hist, verb = false,
@@ -79,7 +81,8 @@ end
 	_x = model(gx)
 	# for training check
 	frozen_params = getparams(model)
-	@test typeof(gx) == CuArray{GenModels.Float,2}
+
+	@test typeof(_x.data) == CuArray{GenModels.Float,2, Nothing}
 	@test typeof(_x) <: TrackedArray{GenModels.Float,2}    
 	hist = MVHistory()
 	GenModels.fit!(model, x, 5, 50, beta =0.1, cbit=5, history = hist, verb = false,
@@ -105,7 +108,7 @@ end
 	# for training check
 	frozen_params = getparams(model)
 	@test typeof(_X) <: TrackedArray{GenModels.Float,4}    
-	@test typeof(_X.data) == CuArray{GenModels.Float, 4}
+	@test typeof(_X.data) == CuArray{GenModels.Float, 4, Nothing}
 	@test GenModels.iscuarray(_X)
 	hist = MVHistory()
 	GenModels.fit!(model, X, 5, 10, beta =0.01, history = hist, verb = false,
@@ -122,7 +125,7 @@ end
 	# for training check
 	frozen_params = getparams(model)
 	@test typeof(_X) <: TrackedArray{GenModels.Float,4}    
-	@test typeof(_X.data) == CuArray{GenModels.Float, 4}
+	@test typeof(_X.data) == CuArray{GenModels.Float, 4, Nothing}
 	@test GenModels.iscuarray(_X)
 	hist = MVHistory()
 	GenModels.fit!(model, X, 5, 10, beta =0.01, history = hist, verb = false,
@@ -139,7 +142,7 @@ end
 	# for training check
 	frozen_params = getparams(model)
 	@test typeof(_X) <: TrackedArray{GenModels.Float,4}    
-	@test typeof(_X.data) == CuArray{GenModels.Float, 4}
+	@test typeof(_X.data) == CuArray{GenModels.Float, 4, Nothing}
 	@test GenModels.iscuarray(_X)
 	hist = MVHistory()
 	GenModels.fit!(model, X, 5, 10, beta =0.01, history = hist, verb = false,
@@ -160,7 +163,7 @@ end
 	# for training check
 	frozen_params = getparams(model)
 
-	@test typeof(gx) == CuArray{GenModels.Float,2}
+	@test typeof(_x.data) == CuArray{GenModels.Float,2, Nothing}
 	@test typeof(_x) <: TrackedArray{GenModels.Float,2}    
 	history = (MVHistory(),MVHistory())
     GenModels.fit!(model, x, 5, 500; history = history, verb = false, usegpu = true,
@@ -186,7 +189,7 @@ end
 	# for training check
 	frozen_params = getparams(model)
 	@test typeof(_X) <: TrackedArray{GenModels.Float,4}    
-	@test typeof(_X.data) == CuArray{GenModels.Float, 4}
+	@test typeof(_X.data) == CuArray{GenModels.Float, 4, Nothing}
 	@test GenModels.iscuarray(_X)
 	hist = (MVHistory(), MVHistory())
 	GenModels.fit!(model, X, 5, 40, beta = 1.0, history = hist, verb = false,
@@ -203,12 +206,13 @@ end
 	x = GenModels.Float.(hcat(ones(xdim, Int(N/2)), zeros(xdim, Int(N/2))))
 	gx = x |> gpu
 	Random.seed!(12345)
-    model = GenModels.AAE(xdim, ldim, 3, 3, GenModels.randn_gpu) |> gpu
+	pz(n) = GenModels.randn_gpu(Float32, ldim, n)
+    model = GenModels.AAE(xdim, ldim, 3, 3, pz) |> gpu
  	_x = model(gx)
 	# for training check
 	frozen_params = getparams(model)
 
-	@test typeof(gx) == CuArray{GenModels.Float,2}
+	@test typeof(gx) == CuArray{GenModels.Float,2, Nothing}
 	@test typeof(_x) <: TrackedArray{GenModels.Float,2}    
 	history = MVHistory()
     GenModels.fit!(model, x, 5, 500; history = history, verb = false, usegpu = true,
@@ -228,14 +232,15 @@ end
     kernelsize = 3
     channels = (2,4)
     scaling = 2
+	pz(n) = GenModels.randn_gpu(Float32, ldim, n)
     # unit model
     model = GenModels.ConvAAE((m,n,c), ldim, 4, nconv, kernelsize, channels, scaling, 
-    	GenModels.randn_gpu; hdim = 10) |> gpu
+    	pz; hdim = 10) |> gpu
     _X = model(gX)
 	# for training check
 	frozen_params = getparams(model)
 	@test typeof(_X) <: TrackedArray{GenModels.Float,4}    
-	@test typeof(_X.data) == CuArray{GenModels.Float, 4}
+	@test typeof(_X.data) == CuArray{GenModels.Float, 4, Nothing}
 	@test GenModels.iscuarray(_X)
 	hist = MVHistory()
 	GenModels.fit!(model, X, 5, 10, history = hist, verb = false,
@@ -250,12 +255,13 @@ end
 	x = GenModels.Float.(hcat(ones(xdim, Int(N/2)), zeros(xdim, Int(N/2))))
 	gx = x |> gpu
 	Random.seed!(12345)
-    model = GenModels.WAE(xdim, ldim, 3, GenModels.randn_gpu) |> gpu
+	pz(n) = GenModels.randn_gpu(Float32, ldim, n)
+    model = GenModels.WAE(xdim, ldim, 3, pz) |> gpu
  	_x = model(gx)
 	# for training check
 	frozen_params = getparams(model)
 
-	@test typeof(gx) == CuArray{GenModels.Float,2}
+	@test typeof(gx) == CuArray{GenModels.Float,2, Nothing}
 	@test typeof(_x) <: TrackedArray{GenModels.Float,2}    
 	history = MVHistory()
     GenModels.fit!(model, x, 5, 500; σ=1.0, λ=1.0, history = history, verb = false, usegpu = true,
@@ -275,14 +281,15 @@ end
     kernelsize = 3
     channels = (2,4)
     scaling = 2
+	pz(n) = GenModels.randn_gpu(Float32, ldim, n)
     # unit model
     model = GenModels.ConvWAE((m,n,c), ldim, nconv, kernelsize, channels, scaling, 
-    	GenModels.randn_gpu; kernel = GenModels.imq) |> gpu
+    	pz; kernel = GenModels.imq) |> gpu
     _X = model(gX)
 	# for training check
 	frozen_params = getparams(model)
 	@test typeof(_X) <: TrackedArray{GenModels.Float,4}    
-	@test typeof(_X.data) == CuArray{GenModels.Float, 4}
+	@test typeof(_X.data) == CuArray{GenModels.Float, 4, Nothing}
 	@test GenModels.iscuarray(_X)
 	hist = MVHistory()
 	GenModels.fit!(model, X, 5, 10; σ=1.0, λ=1.0, history = hist, verb = false,
@@ -316,11 +323,11 @@ end
 	z = model.pz(10)
 	@test size(z) == (latentdim, 10)
 	@test typeof(z) <: TrackedArray{GenModels.Float,2}    
-	@test typeof(z.data) == CuArray{GenModels.Float, 2}
+	@test typeof(z.data) == CuArray{GenModels.Float, 2, Nothing}
 	z = GenModels.sampleVamp(model.pz,10,2)
 	@test size(z) == (m,n,c, 10)
 	@test typeof(z) <: TrackedArray{GenModels.Float,4}    
-	@test typeof(z.data) == CuArray{GenModels.Float, 4}
+	@test typeof(z.data) == CuArray{GenModels.Float, 4, Nothing}
 	# test training
 	hist = MVHistory()
 	GenModels.fit!(model, data, 4, 10, cbit=1, history=hist, verb=false)

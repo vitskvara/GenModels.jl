@@ -23,13 +23,13 @@ Initialize a Wasserstein autoencoder with given encoder size and decoder size.
 
 	esize = vector of ints specifying the width anf number of layers of the encoder
 	dsize = size of decoder
-	pz = generating distribution that can be called as pz(T,dim,nsamples)
+	pz = generating distribution that can be called as pz(nsamples)
 	kernel = default rbf kernel
 	activation [Flux.relu] = arbitrary activation function
 	layer [Flux.Dense] = type of layer
 """
-function WAE(esize::Array{Int64,1}, dsize::Array{Int64,1}, pz=randn; kernel = rbf,
-		activation = Flux.relu, layer = Flux.Dense)
+function WAE(esize::Array{Int64,1}, dsize::Array{Int64,1}, pz = n -> randn(Float,esize[end],n); 
+	kernel = rbf, activation = Flux.relu, layer = Flux.Dense)
 	@assert size(esize, 1) >= 3
 	@assert size(dsize, 1) >= 3
 	@assert esize[end] == dsize[1]
@@ -42,7 +42,7 @@ function WAE(esize::Array{Int64,1}, dsize::Array{Int64,1}, pz=randn; kernel = rb
 	decoder = aelayerbuilder(dsize, activation, layer)
 
 	# finally construct the ae struct
-	wae = WAE(encoder, decoder, n->pz(Float,esize[end],n), kernel)
+	wae = WAE(encoder, decoder, pz, kernel)
 
 	return wae
 end
@@ -57,14 +57,14 @@ between xdim and zdim.
 	xdim = input size
 	zdim = code size
 	nlayers = number of layers
-	pz = generating distribution that can be called as pz(T,dim,nsamples)
+	pz = generating distribution that can be called as pz(nsamples)
 	kernel = default rbf kernel
 	hdim = width of layers, if not specified, it is linearly interpolated
 	activation [Flux.relu] = arbitrary activation function
 	layer [Flux.Dense] = layer type
 """
-function WAE(xdim::Int, zdim::Int, nlayers::Int, pz=randn; kernel=rbf, 
-		activation = Flux.relu,	hdim = nothing, layer = Flux.Dense)
+function WAE(xdim::Int, zdim::Int, nlayers::Int, pz = n -> randn(Float,zdim,n); 
+	kernel=rbf, activation = Flux.relu,	hdim = nothing, layer = Flux.Dense)
 	@assert nlayers >= 2
 
 	if hdim == nothing
@@ -89,7 +89,7 @@ Initialize a convolutional wasserstein autoencoder.
 	kernelsize = Int or a tuple/vector of ints
 	channels = a tuple/vector of number of channels
 	scaling = Int or a tuple/vector of ints
-	pz = sampling distribution that can be called as pz(T,dim,nsamples)
+	pz = sampling distribution that can be called as pz(nsamples)
 	kernel = default rbf kernel
 	ndense = number of dense layers
 	dsizes = vector of dense layer widths
@@ -99,7 +99,7 @@ Initialize a convolutional wasserstein autoencoder.
 	outbatchnorm = use batchnorm on the outpu of encoder
 	upscale_type = one of ["transpose", "upscale"]
 """
-function ConvWAE(insize, zdim, nconv, kernelsize, channels, scaling, pz=randn; 
+function ConvWAE(insize, zdim, nconv, kernelsize, channels, scaling, pz = n -> randn(Float,zdim,n); 
 	kernel = rbf, outbatchnorm=false, upscale_type = "transpose", kwargs...)
 	# first build the convolutional encoder and decoder
 	encoder = convencoder(insize, zdim, nconv, kernelsize, 
@@ -107,7 +107,7 @@ function ConvWAE(insize, zdim, nconv, kernelsize, channels, scaling, pz=randn;
 	decoder = convdecoder(insize, zdim, nconv, kernelsize, 
 		reverse(channels), scaling; layertype = upscale_type, kwargs...)
 
-	return WAE(encoder, decoder, n->pz(Float,zdim,n), kernel)
+	return WAE(encoder, decoder, pz, kernel)
 end
 
 ###########################

@@ -128,8 +128,9 @@ N = 10
 	scaling = [(2,2),(2,2),(1,1)]
 	batchnorm = true
 	hdim = 10 # width of the discriminator
+	pz(n) = randn(Float32, latentdim, n)
 	model = GenModels.ConvAAE(insize, latentdim, disc_nlayers, nconv, kernelsize, 
-		channels, scaling; hdim = hdim, batchnorm = batchnorm)
+		channels, scaling, pz; hdim = hdim, batchnorm = batchnorm)
 	# test correct construction
 	@test length(model.discriminator.layers) == disc_nlayers
 	@test size(model.discriminator.layers[2].W, 1) == hdim

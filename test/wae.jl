@@ -107,8 +107,9 @@ N = 10
 	channels = (2,4,6)
 	scaling = [(2,2),(2,2),(1,1)]
 	batchnorm = true
+	pz(n) = randn(Float32, latentdim, n)
 	model = GenModels.ConvWAE(insize, latentdim, nconv, kernelsize, 
-		channels, scaling; kernel = GenModels.imq, batchnorm = batchnorm)
+		channels, scaling, pz; kernel = GenModels.imq, batchnorm = batchnorm)
 	Y = model(data)
 	@test size(Y) == size(data)
 	# test training

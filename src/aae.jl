@@ -33,12 +33,12 @@ Initialize an adversarial autoencoder.
 	esize = vector of ints specifying the width anf number of layers of the encoder
 	decsize = size of decoder
 	dissize = size of discriminator
-	pz = sampling distribution that can be called as pz(T,dim,nsamples)
+	pz = sampling distribution that can be called as pz(nsamples)
 	activation [Flux.relu] = arbitrary activation function
 	layer [Flux.Dense] = layer type
 """
 function AAE(esize::Array{Int64,1}, decsize::Array{Int64,1}, dissize::Array{Int64,1}, 
-	pz = randn; activation = Flux.relu,	layer = Flux.Dense)
+	pz = n -> randn(Float, esize[end], n); activation = Flux.relu,	layer = Flux.Dense)
 	@assert size(esize, 1) >= 3
 	@assert size(decsize, 1) >= 3
 	@assert size(dissize, 1) >= 3
@@ -57,7 +57,7 @@ function AAE(esize::Array{Int64,1}, decsize::Array{Int64,1}, dissize::Array{Int6
 	discriminator = discriminatorbuilder(dissize, activation, layer)
 
 	# finally construct the ae struct
-	aae = AAE(encoder, decoder, discriminator, n->pz(Float,esize[end],n))
+	aae = AAE(encoder, decoder, discriminator, pz)
 
 	return aae
 end
@@ -72,13 +72,14 @@ and number of layers.
 	zdim = code size
 	ae_nlayers = number of layers of the autoencoder
 	disc_nlayers = number of layers of the discriminator
-	pz = sampling distribution that can be called as pz(T,dim,nsamples)
+	pz = sampling distribution that can be called as pz(nsamples)
 	hdim = width of layers, if not specified, it is linearly interpolated
 	activation [Flux.relu] = arbitrary activation function
 	layer [Flux.Dense] = layer type
 """
 function AAE(xdim::Int, zdim::Int, ae_nlayers::Int, disc_nlayers::Int, 
-	pz = randn; hdim = nothing, activation = Flux.relu, layer = Flux.Dense)
+	pz = n -> randn(Float, zdim,n); hdim = nothing, activation = Flux.relu, 
+	layer = Flux.Dense)
 	@assert ae_nlayers >= 2
 	@assert disc_nlayers >= 2
 
@@ -119,7 +120,8 @@ Initialize a convolutional adversarial autoencoder.
 	outbatchnorm = use batchnorm on the outpu of encoder
 	upscale_type = one of ["transpose", "upscale"]
 """
-function ConvAAE(insize, zdim, disc_nlayers, nconv, kernelsize, channels, scaling, pz=randn; 
+function ConvAAE(insize, zdim, disc_nlayers, nconv, kernelsize, channels, scaling, 
+	pz = n -> randn(Float,zdim,n); 
 	outbatchnorm=false, hdim=nothing, activation=Flux.relu, layer=Flux.Dense, upscale_type = "transpose",
 	kwargs...)
 	# first build the convolutional encoder and decoder
@@ -134,7 +136,7 @@ function ConvAAE(insize, zdim, disc_nlayers, nconv, kernelsize, channels, scalin
 		dissize = vcat([zdim], fill(hdim, disc_nlayers-1), [1])
 	end
 	discriminator = discriminatorbuilder(dissize, activation, layer)
-	return AAE(encoder, decoder, discriminator, n->pz(Float,zdim,n))
+	return AAE(encoder, decoder, discriminator, pz)
 end
 
 ################

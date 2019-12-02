@@ -162,8 +162,9 @@ N = 10
 	scaling = [(2,2),(2,2),(1,1)]
 	batchnorm = true
 	disc_nlayers = 3
+	pz(n) = randn(Float32,latentdim,n)
 	model = GenModels.ConvWAAE(insize, latentdim, disc_nlayers, nconv, kernelsize, 
-		channels, scaling; kernel = GenModels.imq, batchnorm = batchnorm)
+		channels, scaling, pz; kernel = GenModels.imq, batchnorm = batchnorm)
 	Y = model(data)
 	@test size(Y) == size(data)
 	# test training
